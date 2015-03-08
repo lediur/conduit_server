@@ -1,5 +1,5 @@
 # Import flask and template operators
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 # Import SQLAlchemy
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -10,10 +10,6 @@ app = Flask(__name__)
 # Configurations
 app.config.from_object('config')
 
-# Define the database object which is imported
-# by modules and controllers
-db = SQLAlchemy(app)
-
 # Sample HTTP error handling
 @app.errorhandler(404)
 def not_found(error):
@@ -22,7 +18,13 @@ def not_found(error):
 # User routes
 @app.route('/user', methods=['GET'])
 def user():
-  return 'GET /user\n'
+  users = [{
+    'first': user.first,
+    'last': user.last,
+    'phone': user.phone,
+    'email': user.email
+  } for user in User.query.all()]
+  return jsonify(users=users)
 
 @app.route('/user/create', methods=['POST'])
 def user_create():
@@ -30,8 +32,20 @@ def user_create():
   last  = request.json['last']
   phone = request.json['phone']
   email = request.json['email']
+
   # Create the user
-  return 'POST /user/create\n'
+  u = User(first, last, phone, email)
+  db.add(u)
+  db.commit()
+  
+  user = {
+    'first': u.first,
+    'last': u.last,
+    'phone': u.phone,
+    'email': u.email
+  }
+
+  return jsonify(user=user)
 
 @app.route('/user/update', methods=['POST'])
 def user_update():
@@ -39,6 +53,7 @@ def user_update():
 
 @app.route('/user/delete', methods=['POST'])
 def user_delete():
+  User.query.delete()  
   return 'POST /user/delete\n'
 
 # Car routes
@@ -58,14 +73,15 @@ def car_update():
 def car_delete():
   return 'POST /car/delete\n'
 
-# Import a module / component using its blueprint handler variable (mod_auth)
-from app.mod_auth.controllers import mod_auth as auth_module
 
-# Register blueprint(s)
-app.register_blueprint(auth_module)
-# app.register_blueprint(xyz_module)
-# ..
+from app.database import db
 
-# Build the database:
-# This will create the database file using SQLAlchemy
-db.create_all()
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+  db.remove()
+
+from app.database import init_db
+init_db()
+
+from app.database import db
+from app.models import User
