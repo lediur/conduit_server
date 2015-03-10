@@ -24,6 +24,7 @@ def user():
     'phone': user.phone,
     'email': user.email
   } for user in User.query.all()]
+  
   return jsonify(users=users)
 
 @app.route('/user/create', methods=['POST'])
@@ -53,17 +54,34 @@ def user_update():
 
 @app.route('/user/delete', methods=['POST'])
 def user_delete():
-  User.query.delete()  
   return 'POST /user/delete\n'
 
 # Car routes
 @app.route('/car', methods=['GET'])
 def car():
-  return 'GET /car\n'
+  cars = [{
+    'license_plate': car.license_plate,
+    'manufacturer': car.manufacturer
+  } for car in Car.query.all()]
+
+  return jsonify(cars=cars)
 
 @app.route('/car/create', methods=['POST'])
 def car_create():
-  return 'POST /car/create\n'
+  license_plate = request.json['license_plate']
+  manufacturer  = request.json['manufacturer']
+
+  # Create the user
+  c = Car(license_plate, manufacturer)
+  db.add(c)
+  db.commit()
+  
+  car = {
+    'license_plate': c.license_plate,
+    'manufacturer': c.manufacturer,
+  }
+
+  return jsonify(car=car)
 
 @app.route('/car/update', methods=['POST'])
 def car_update():
