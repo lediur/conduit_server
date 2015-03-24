@@ -14,5 +14,6 @@ $ env/bin/python run.py
 ```
 ##Sending Requests with cURL
 ```
-$ curl -H "Content-Type: application/json" -d '@body.json' 'localhost:8080/user/create'
+$ curl -H "Content-Type: application/json" -d '@user.json' 'localhost:8080/users/create'
+$ curl -H "Content-Type: application/json" -d '@car.json' 'localhost:8080/cars/create'
 ```
