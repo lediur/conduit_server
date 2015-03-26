@@ -8,8 +8,8 @@ class Car(Base):
   license_plate = Column(String(16), unique=True)
   manufacturer = Column(String(32), unique=False)
 
-  conversations = relationship("Conversation", order_by="Conversation.id", backref="car")
-  
+  conversations = relationship('Conversation', order_by="Conversation.id", backref='car')
+
   def __init__(self, license_plate=None, manufacturer=None):
     self.license_plate = license_plate
     self.manufacturer = manufacturer

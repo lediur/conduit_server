@@ -15,10 +15,10 @@ import routes as Routes
 from app.database import db, init_db
 init_db()
 
-@app.errorhandler(404)
-def not_found(error):
-  abort(404)
+# @app.errorhandler(404)
+# def not_found(error):
+#   abort(404)
 
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-  db.remove()
+# @app.teardown_appcontext
+# def shutdown_session(exception=None):
+#   db.remove()

@@ -13,6 +13,7 @@ class User(Base):
   phone = Column(String(32), unique=True)
 
   cars = relationship('Car', secondary=users_cars, backref='users')
+  conversations = relationship('Conversation', order_by="Conversation.id", backref='user')
 
   def __init__(self, email=None, first=None, last=None, phone=None):
     self.email = email
