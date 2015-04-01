@@ -9,7 +9,7 @@ from app.utils import user_param_keys, validate
 # User routes
 @app.route('/users', methods=['GET'])
 def get_users():
-  response = {}
+  response = []
   users = []
 
   if ('car_id' in request.args):
@@ -23,8 +23,8 @@ def get_users():
     for param_key in user_param_keys:
       user_props[param_key] = user.get(param_key)
     user_props['id'] = user.id
-    response[user.id] = user_props
-  return jsonify(response)
+    response.append(user_props)
+  return jsonify(users=response)
 
 @app.route('/users/<user_id>', methods=['GET'])
 def get_users_by_user_id(user_id):

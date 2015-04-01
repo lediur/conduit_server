@@ -9,7 +9,7 @@ from app.utils import car_param_keys, validate
 # Car routes
 @app.route('/cars', methods=['GET'])
 def get_cars():
-  response = {}
+  response = []
   cars = []
 
   if ('user_id' in request.args):
@@ -23,8 +23,8 @@ def get_cars():
     for param_key in car_param_keys:
       car_props[param_key] = car.get(param_key)
     car_props['id'] = car.id
-    response[car.id] = car_props
-  return jsonify(response)
+    response.append(car_props)
+  return jsonify(cars=response)
 
 @app.route('/cars/<car_id>', methods=['GET'])
 def get_cars_by_car_id(car_id):
