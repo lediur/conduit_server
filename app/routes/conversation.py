@@ -17,8 +17,6 @@ def conversation(user_id):
     conversations = [{
       'id': conversation.id,
       'charger_unlocked': conversation.charger_unlocked,
-      'request_lat': conversation.request_lat,
-      'request_lng': conversation.request_lng,
       'timestamp': conversation.timestamp,
       'receiver_car_id': conversation.receiver_car_id,
       'requester_user_id': conversation.requester_user_id
@@ -29,9 +27,7 @@ def conversation(user_id):
 
 @app.route('/conversations/create', methods=['POST'])
 def conversation_create():
-  charger_unlocked = (request.json['charger_unlocked'] == "True")
-  request_lat = request.json['request_lat']
-  request_lng = request.json['request_lng']
+  charger_unlocked = request.json['charger_unlocked'] in ['True', 'T']
   timestamp = datetime.datetime.utcnow()
 
   receiver_car_id = int(request.json['receiver_car_id'])
@@ -39,16 +35,15 @@ def conversation_create():
   receiver_car = Car.query.get(receiver_car_id)
   requester_user = User.query.get(requester_user_id)
 
-  c = Conversation(charger_unlocked, request_lat, request_lng, timestamp, receiver_car_id, requester_user_id)
+  c = Conversation(charger_unlocked, timestamp, receiver_car_id, requester_user_id)
   receiver_car.conversations.append(c)
   requester_user.conversations.append(c)
 
   db.commit()
   
   conversation = {
+    'id': c.id,
     'charger_unlocked': c.charger_unlocked,
-    'request_lat': c.request_lat,
-    'request_lng': c.request_lng,
     'timestamp': c.timestamp,
     'receiver_car_id': c.receiver_car_id,
     'requester_car_id': c.requester_user_id

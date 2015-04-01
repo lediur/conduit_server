@@ -1,6 +1,7 @@
 {
-  "first": "David",
-  "last": "Eng",
-  "phone": "4086881441",
-  "email": "david@gmail.com"
+  "first_name": "David",
+  "last_name": "Eng",
+  "phone_number": "0987654321",
+  "email_address": "david@gmail.com",
+  "push_enabled": "False"
 }
