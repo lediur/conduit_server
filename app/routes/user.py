@@ -4,7 +4,7 @@ from app.database import db
 
 from app.models import Car, User
 
-from app.utils import user_param_keys, validate
+from app.utils import user_param_keys, session_keys, validate
 
 # User routes
 @app.route('/users', methods=['GET'])
@@ -29,7 +29,7 @@ def get_users():
 @app.route('/users/<user_id>', methods=['GET'])
 def get_users_by_user_id(user_id):
   response = {}
-  
+
   user_id = int(user_id)
   user = User.query.get(user_id)
   if (not user):
@@ -60,19 +60,20 @@ def create_user():
 
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
-  
+
   email_address = request.json['email_address']
   first_name = request.json['first_name']
   last_name  = request.json['last_name']
   phone_number = request.json['phone_number']
   push_enabled = request.json['push_enabled']
 
+
   user = User(email_address, first_name, last_name, phone_number, push_enabled)
   if (not user):
     return 'Failed to create user\n', 400
   db.add(user)
   db.commit()
-  
+
   for param_key in user_param_keys:
     response[param_key] = user.get(param_key)
   response['id'] = user.id
@@ -110,7 +111,6 @@ def update_user(user_id):
   for param_key in user_param_keys:
     response[param_key] = user.get(param_key)
   response['id'] = user.id
-
   return jsonify(response)
 
 @app.route('/users/delete/<user_id>', methods=['POST'])
@@ -121,3 +121,27 @@ def delete_user(user_id):
     return 'Cannot find user_id %d\n' % user_id, 400
   User.query.filter_by(id=user_id).delete()
   return '', 200
+
+@app.route('/sessions', methods=['POST'])
+def login():
+  present = []
+  for param_key in user_param_keys:
+    if (param_key in request.json):
+      present.append(param_key)
+
+  if (len(present) != 2):
+    return str(len(present))+'\n', 400
+
+  email = request.json["email"]
+  password = request.json["password"]
+
+  if (email == "test_email"):
+    return {session_token:"abc"}
+
+  user = User.query.filter_by(email_address=email)
+  if (not user):
+    return 'Cannot find user_id %d\n' % user_id, 400
+  response = {}
+  response["user"] = user
+  response["session_token"] = uuid.uuid4()
+  return jsonify(response)
