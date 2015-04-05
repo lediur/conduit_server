@@ -14,10 +14,33 @@ class Message(Base):
   conversation_id = Column(Integer, ForeignKey('conversations.id'))
     
   def __init__(self, sender_id=None, text=None, timestamp=None, conversation_id=None):
-    self.sender_id = sender_id
+    self.sender_id = int(sender_id)
     self.text = text
     self.timestamp = timestamp
-    self.conversation_id = conversation_id
+    self.conversation_id = int(conversation_id)
+
+  def get(self, prop):
+    if (prop == 'sender_id'):
+      return self.sender_id
+    if (prop == 'text'):
+      return self.text
+    if (prop == 'timestamp'):
+      return self.timestamp
+    if (prop == 'conversation_id'):
+      return self.conversation_id
+    if (prop == 'id'):
+      return self.id
+
+  # PROP and VALUE are both strings
+  def set(self, prop, value):
+    if (prop == 'sender_id'):
+      self.sender_id = int(value)
+    if (prop == 'text'):
+      self.text = value
+    if (prop == 'timestamp'):
+      self.timestamp = value
+    if (prop == 'conversation_id'):
+      self.conversation_id = int(value)
 
   def __repr__(self):
     s = ', '.join(['id="%d"' % self.id,
