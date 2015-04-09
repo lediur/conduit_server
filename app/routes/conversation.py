@@ -89,7 +89,7 @@ def create_conversation():
 
   return jsonify(response)
 
-@app.route('/conversations/update/<conversation_id>', methods=['POST'])
+@app.route('/conversations/<conversation_id>/update', methods=['POST'])
 def update_conversation(conversation_id):
   present = []
   invalid = []
@@ -123,7 +123,7 @@ def update_conversation(conversation_id):
 
   return jsonify(response)
 
-@app.route('/conversations/delete/<conversation_id>', methods=['POST'])
+@app.route('/conversations/<conversation_id>/delete', methods=['POST'])
 def delete_conversation(conversation_id):
   conversation_id = int(conversation_id)
   conversation = Conversation.query.get(conversation_id)

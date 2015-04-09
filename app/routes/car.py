@@ -77,7 +77,7 @@ def create_car():
 
   return jsonify(response)
 
-@app.route('/cars/update/<car_id>', methods=['POST'])
+@app.route('/cars/<car_id>/update', methods=['POST'])
 def update_car(car_id):
   present = []
   invalid = []
@@ -111,7 +111,7 @@ def update_car(car_id):
 
   return jsonify(response)
 
-@app.route('/cars/delete/<car_id>', methods=['POST'])
+@app.route('/cars/<car_id>/delete', methods=['POST'])
 def delete_car(car_id):
   car_id = int(car_id)
   car = Car.query.get(car_id)

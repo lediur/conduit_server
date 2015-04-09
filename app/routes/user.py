@@ -82,7 +82,7 @@ def create_user():
 
   return jsonify(response)
 
-@app.route('/users/update/<user_id>', methods=['POST'])
+@app.route('/users/<user_id>/update', methods=['POST'])
 def update_user(user_id):
   present = []
   invalid = []
@@ -116,7 +116,7 @@ def update_user(user_id):
 
   return jsonify(response)
 
-@app.route('/users/delete/<user_id>', methods=['POST'])
+@app.route('/users/<user_id>/delete', methods=['POST'])
 def delete_user(user_id):
   user_id = int(user_id)
   user = User.query.get(user_id)
@@ -127,17 +127,17 @@ def delete_user(user_id):
 
 @app.route('/users/<user_id>/identity', methods=['POST'])
 def get_identity_token(user_id):
-  #Grab nonce from request
+  # Grab nonce from request
   nonce = request.POST['nonce']
   user_id = int(user_id)
   user = User.query.get(user_id)
-  #Read RSA key
+  # Read RSA key
   root = os.path.dirname(__file__)
   with open(os.path.join(root, "layer.pem"), 'r') as rsa_priv_file:
       priv_rsakey = RSA.importKey(rsa_priv_file.read())
 
-  #Create identity token
-  #Make sure you have PyJWT and PyCrypto libraries installed and imported
+  # Create identity token
+  # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
       payload={
           "iss": "7b29a59c-db1b-11e4-b670-52bb02000413",  # The Layer Provider ID

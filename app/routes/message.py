@@ -84,7 +84,7 @@ def create_message():
 
   return jsonify(response)
 
-@app.route('/messages/update/<message_id>', methods=['POST'])
+@app.route('/messages/<message_id>/update', methods=['POST'])
 def update_message(message_id):
   present = []
   invalid = []
@@ -118,7 +118,7 @@ def update_message(message_id):
 
   return jsonify(response)
 
-@app.route('/messages/delete/<message_id>', methods=['POST'])
+@app.route('/messages/<message_id>/delete', methods=['POST'])
 def delete_message(message_id):
   message_id = int(message_id)
   message = Message.query.get(message_id)
