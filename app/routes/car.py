@@ -111,7 +111,7 @@ def update_car(car_id):
 
   return jsonify(response)
 
-@app.route('/cars/<car_id>/delete', methods=['POST'])
+@app.route('/cars/<car_id>', methods=['DELETE'])
 def delete_car(car_id):
   car_id = int(car_id)
   car = Car.query.get(car_id)

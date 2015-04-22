@@ -123,7 +123,7 @@ def update_conversation(conversation_id):
 
   return jsonify(response)
 
-@app.route('/conversations/<conversation_id>/delete', methods=['POST'])
+@app.route('/conversations/<conversation_id>', methods=['DELETE'])
 def delete_conversation(conversation_id):
   conversation_id = int(conversation_id)
   conversation = Conversation.query.get(conversation_id)

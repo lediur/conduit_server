@@ -9,5 +9,5 @@ users_cars = Table('users_cars', Base.metadata,
 from car import Car
 from conversation import Conversation
 from message import Message
+from session import Session
 from user import User
-
