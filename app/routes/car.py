@@ -12,8 +12,8 @@ def get_cars():
   response = []
   cars = []
 
-  if ('session_token' in request.args):
-    session_token = request.args['session_token']
+  if ('session_token' in request.json):
+    session_token = request.json['session_token']
     session = Session.query.filter_by(session_token=session_token)
                            .first()
     if (!session):
