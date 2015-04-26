@@ -11,7 +11,6 @@ class Car(Base):
   manufacturer = Column(String(32), unique=False)
 
   # Relationships
-  users = relationship('User', secondary=users_cars, backref='cars')
   conversations = relationship('Conversation', order_by="Conversation.id", backref='car')
 
   def __init__(self, license_plate=None, manufacturer=None, user_id=None):
