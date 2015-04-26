@@ -2,7 +2,7 @@ from flask import jsonify, request, session
 from app import app
 from app.database import db
 
-from app.models import Car, User
+from app.models import Car, Session, User
 
 from app.utils import user_param_keys, validate
 
@@ -51,6 +51,40 @@ def create_user():
     response[param_key] = user.get(param_key)
 
   return jsonify(response)
+
+@app.route('/users/<user_id>/identity', methods=['POST'])
+def get_identity_token(user_id):
+  # Grab nonce from request
+  nonce = request.POST['nonce']
+  user_id = int(user_id)
+  user = User.query.get(user_id)
+  # Read RSA key
+  root = os.path.dirname(__file__)
+  with open(os.path.join(root, 'layer.pem'), 'r') as rsa_priv_file:
+    priv_rsakey = RSA.importKey(rsa_priv_file.read())
+
+  # Create identity token
+  # Make sure you have PyJWT and PyCrypto libraries installed and imported
+  identityToken = jwt.encode(
+    payload={
+      'iss': '7b29a59c-db1b-11e4-b670-52bb02000413',  # The Layer Provider ID
+      'prn': '948374839',                             # String - Provider's internal ID for the authenticating user
+      'iat': datetime.now(),                          # Integer - Time of Token Issuance in RFC 3339 seconds
+      'exp': datetime.utcnow() + timedelta(seconds=30),   # Integer - Arbitrary time of Token Expiration in RFC 3339 seconds
+      'nce': nonce                                    # The nonce obtained via the Layer client SDK.
+    },
+    key=priv_rsakey,
+    headers = {
+      'typ': 'JWS',               # String - Expresses a MIME Type of application/JWS
+      'alg': 'RS256',             # String - Expresses the type of algorithm used to sign the token, must be RS256
+      'cty': 'layer-eit;v=1',     # String - Express a Content Type of Layer External Identity Token, version 1
+      'kid': '88a05500-2efe-11e4-8611-830000002b1e' # Sting - Layer Key ID used to sign the token
+    },
+    algorithm='RS256'
+  )
+
+  print identityToken
+  return HttpResponse(identityToken)
 
 # User routes for Development
 @app.route('/users', methods=['GET'])
@@ -179,37 +213,3 @@ def delete_user(user_id):
     return 'Cannot find user_id %d\n' % user_id, 400
   User.query.filter_by(id=user_id).delete()
   return '', 200
-
-@app.route('/users/<user_id>/identity', methods=['POST'])
-def get_identity_token(user_id):
-  # Grab nonce from request
-  nonce = request.POST['nonce']
-  user_id = int(user_id)
-  user = User.query.get(user_id)
-  # Read RSA key
-  root = os.path.dirname(__file__)
-  with open(os.path.join(root, 'layer.pem'), 'r') as rsa_priv_file:
-    priv_rsakey = RSA.importKey(rsa_priv_file.read())
-
-  # Create identity token
-  # Make sure you have PyJWT and PyCrypto libraries installed and imported
-  identityToken = jwt.encode(
-    payload={
-      'iss': '7b29a59c-db1b-11e4-b670-52bb02000413',  # The Layer Provider ID
-      'prn': '948374839',                             # String - Provider's internal ID for the authenticating user
-      'iat': datetime.now(),                          # Integer - Time of Token Issuance in RFC 3339 seconds
-      'exp': datetime.utcnow() + timedelta(seconds=30),   # Integer - Arbitrary time of Token Expiration in RFC 3339 seconds
-      'nce': nonce                                    # The nonce obtained via the Layer client SDK.
-    },
-    key=priv_rsakey,
-    headers = {
-      'typ': 'JWS',               # String - Expresses a MIME Type of application/JWS
-      'alg': 'RS256',             # String - Expresses the type of algorithm used to sign the token, must be RS256
-      'cty': 'layer-eit;v=1',     # String - Express a Content Type of Layer External Identity Token, version 1
-      'kid': '88a05500-2efe-11e4-8611-830000002b1e' # Sting - Layer Key ID used to sign the token
-    },
-    algorithm='RS256'
-  )
-
-  print identityToken
-  return HttpResponse(identityToken)

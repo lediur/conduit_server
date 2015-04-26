@@ -6,14 +6,19 @@ from app.models import Car, User
 
 from app.utils import car_param_keys, validate
 
-# Car routes
+# Car routes for Production
 @app.route('/cars', methods=['GET'])
 def get_cars():
   response = []
   cars = []
 
-  if ('user_id' in request.args):
-    user_id = request.args['user_id']
+  if ('session_token' in request.args):
+    session_token = request.args['session_token']
+    session = Session.query.filter_by(session_token=session_token)
+                           .first()
+    if (!session):
+      return 'Invalid session_token', 400
+    user_id = session.user_id
     cars = User.query.get(user_id).cars
   else:
     cars = Car.query.all()
@@ -26,6 +31,7 @@ def get_cars():
     response.append(car_props)
   return jsonify(cars=response)
 
+# Car routes for Development
 @app.route('/cars/<car_id>', methods=['GET'])
 def get_cars_by_car_id(car_id):
   response = {}
