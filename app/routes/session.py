@@ -9,6 +9,7 @@ from app.utils import user_param_login_keys, validate
 import datetime
 import uuid
 
+# Session routes for Production
 @app.route('/sessions/create', methods=['POST'])
 def create_session():
   '''
@@ -16,6 +17,8 @@ def create_session():
   returns the random UUID session token. Otherwise, returns 400 Bad Request
   Error.
   '''
+
+  # Validation
   omitted = []
   invalid = []
   response = {}
@@ -34,6 +37,7 @@ def create_session():
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
 
+  # Retrive user
   email_address = request.json['email_address']
   password = request.json['password']
 
@@ -41,6 +45,7 @@ def create_session():
                 .filter_by(password=password)\
                 .first()
 
+  # Create session
   session_token = str(uuid.uuid4())
   timestamp = datetime.datetime.utcnow()
   user_id = u.id

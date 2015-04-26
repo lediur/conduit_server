@@ -128,49 +128,7 @@ def get_users_by_user_id(user_id):
   response['id'] = user.id
 
   return jsonify(response)
-"""
-@app.route('/users/create', methods=['POST'])
-def create_user():
-  '''
-  If the request includes the user_param_keys as body parameters, returns
-  the created user. Otherwise, returns 400 Bad Request Error.
-  '''
-  omitted = []
-  invalid = []
-  response = {}
 
-  for param_key in user_param_keys:
-    if (param_key not in request.json):
-      omitted.append(param_key)
-
-  if (len(omitted) > 0):
-    return 'Must provide %s\n' % ', '.join(omitted), 400
-
-  for param_key in user_param_keys:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-
-  if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
-  
-  email_address = request.json['email_address']
-  first_name = request.json['first_name']
-  last_name  = request.json['last_name']
-  phone_number = request.json['phone_number']
-  push_enabled = request.json['push_enabled']
-
-  user = User(email_address, first_name, last_name, phone_number, push_enabled)
-  if (not user):
-    return 'Failed to create user\n', 400
-  db.add(user)
-  db.commit()
-  
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
-  return jsonify(response)
-"""
 @app.route('/users/<user_id>/update', methods=['POST'])
 def update_user(user_id):
   present = []

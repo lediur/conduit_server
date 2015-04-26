@@ -16,7 +16,7 @@ def get_cars():
     session_token = request.json['session_token']
     session = Session.query.filter_by(session_token=session_token)
                            .first()
-    if (!session):
+    if (not session):
       return 'Invalid session_token', 400
     user_id = session.user_id
     cars = User.query.get(user_id).cars
