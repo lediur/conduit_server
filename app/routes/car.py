@@ -59,7 +59,7 @@ def get_cars_by_car_id(car_id):
     return 'Invalid car_id %s' % car_id, 400
 
   # Validates user owns car
-  if (car_id not in [car.id for car in cars])
+  if (car_id not in [car.id for car in cars]):
     return 'Invalid session_token %s' % session_token, 400
 
   # Validates car
