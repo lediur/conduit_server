@@ -6,27 +6,18 @@ from app.models import Car, User
 
 from app.utils import car_param_keys, validate
 
-# Car routes for Production
+# Car routes
 @app.route('/cars', methods=['GET'])
 def get_cars():
   response = []
   cars = []
 
-  # Validates session
-  if ('session_token' in request.json):
-    session_token = request.json['session_token']
-    session = Session.query.filter_by(session_token=session_token).first()
-    if (not session):
-      return 'Invalid session_token %s' % session_token, 400
-    user_id = session.user_id
-    user = User.query.get(user_id)
-    if (not user):
-      return 'Invalid session_token %s' % session_token, 400
-    cars = user.cars
+  if ('user_id' in request.args):
+    user_id = request.args['user_id']
+    cars = User.query.get(user_id).cars
   else:
-    return 'Must provide session_token', 400
+    cars = Car.query.all()
 
-  # Retrives cars
   for car in cars:
     car_props = {}
     for param_key in car_param_keys:
@@ -38,36 +29,12 @@ def get_cars():
 @app.route('/cars/<car_id>', methods=['GET'])
 def get_cars_by_car_id(car_id):
   response = {}
-
-  # Validates session
-  if ('session_token' not in request.json):
-    return 'Must provide session_token', 400
-  session_token = request.json['session_token']
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return 'Invalid session_token %s' % session_token, 400
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Invalid session_token %s' % session_token, 400
-  cars = user.cars
   
-  # Validates car_id
-  try:
-    car_id = int(car_id)
-  except:
-    return 'Invalid car_id %s' % car_id, 400
-
-  # Validates user owns car
-  if (car_id not in [car.id for car in cars])
-    return 'Invalid session_token %s' % session_token, 400
-
-  # Validates car
+  car_id = int(car_id)
   car = Car.query.get(car_id)
   if (not car):
     return 'Cannot find car_id %d\n' % car_id, 400
 
-  # Retrieve car
   for param_key in car_param_keys:
     response[param_key] = car.get(param_key)
   response['id'] = car.id
@@ -79,18 +46,6 @@ def create_car():
   omitted = []
   invalid = []
   response = {}
-
-  # Validates session
-  if ('session_token' not in request.json):
-    return 'Must provide session_token', 400
-  session_token = request.json['session_token']
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return 'Invalid session_token %s' % session_token, 400
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Invalid session_token %s' % session_token, 400
 
   for param_key in car_param_keys:
     if (param_key not in request.json):
@@ -108,8 +63,9 @@ def create_car():
   
   license_plate = request.json['license_plate']
   manufacturer = request.json['manufacturer']
+  # user_id = request.json['user_id']
 
-  car = Car(license_plate, manufacturer, user_id)
+  car = Car(license_plate, manufacturer)
   if (not car):
     return 'Failed to create car\n', 400
   db.add(car)
