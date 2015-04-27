@@ -55,7 +55,7 @@ def create_session():
     return 'Failed to create session\n', 400
   db.add(session)
   db.commit()
-  return jsonify(session.get('session_token'))
+  return jsonify(session_token=session.get('session_token'))
 
 # Session routes for Development
 @app.route('/sessions', methods=['GET'])
