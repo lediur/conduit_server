@@ -6,7 +6,7 @@ engine = create_engine('sqlite:////tmp/bloop.db', convert_unicode=True)
 db = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
-Base = declarative_base()
+Base = declarative_base(bind=engine)
 Base.query = db.query_property()
 
 def init_db():

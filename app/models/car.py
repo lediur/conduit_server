@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-from app.models import users_cars
+# from app.models import users_cars
 
 class Car(Base):
   __tablename__ = 'cars'
@@ -16,9 +16,6 @@ class Car(Base):
   def __init__(self, license_plate=None, manufacturer=None, user_id=None):
     self.license_plate = license_plate
     self.manufacturer = manufacturer
-
-    user = User.query.get(user_id)
-    self.users.append(user)
 
   def get(self, prop):
     if (prop == 'license_plate'):

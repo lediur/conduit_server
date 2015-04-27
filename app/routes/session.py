@@ -4,7 +4,7 @@ from app.database import db
 
 from app.models import Session, User
 
-from app.utils import user_param_login_keys, validate
+from app.utils import session_param_keys, user_param_login_keys, validate
 
 import datetime
 import uuid
@@ -53,4 +53,22 @@ def create_session():
   session = Session(session_token, timestamp, user_id)
   if (not session):
     return 'Failed to create session\n', 400
-  return session.get('session_token')
+  db.add(session)
+  db.commit()
+  return jsonify(session.get('session_token'))
+
+# Session routes for Development
+@app.route('/sessions', methods=['GET'])
+def get_sessions():
+  response = []
+  sessions = []
+
+  sessions = Session.query.all()
+
+  for session in sessions:
+    session_props = {}
+    for param_key in session_param_keys:
+      session_props[param_key] = session.get(param_key)
+    session_props['id'] = session.id
+    response.append(session_props)
+  return jsonify(sessions=response)

@@ -2,7 +2,7 @@ from flask import jsonify, request
 from app import app
 from app.database import db
 
-from app.models import Car, User
+from app.models import Car, Session, User, UsersJoinCars
 
 from app.utils import car_param_keys, validate
 
@@ -13,18 +13,19 @@ def get_cars():
   cars = []
 
   # Validates session
-  if ('session_token' in request.json):
-    session_token = request.json['session_token']
-    session = Session.query.filter_by(session_token=session_token).first()
-    if (not session):
-      return 'Invalid session_token %s' % session_token, 400
-    user_id = session.user_id
-    user = User.query.get(user_id)
-    if (not user):
-      return 'Invalid session_token %s' % session_token, 400
-    cars = user.cars
-  else:
+  if (not request.json):
     return 'Must provide session_token', 400
+  if ('session_token' not in request.json):
+    return 'Must provide session_token', 400  
+  session_token = request.json['session_token']
+  session = Session.query.filter_by(session_token=session_token).first()
+  if (not session):
+    return 'Invalid session_token %s' % session_token, 400
+  user_id = session.user_id
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Invalid session_token %s' % session_token, 400
+  cars = user.cars
 
   # Retrives cars
   for car in cars:
@@ -55,7 +56,7 @@ def get_cars_by_car_id(car_id):
   # Validates car_id
   try:
     car_id = int(car_id)
-  except:
+  except ValueError:
     return 'Invalid car_id %s' % car_id, 400
 
   # Validates user owns car
@@ -92,7 +93,7 @@ def create_car():
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
 
-  # Validates created information for car
+  # Validates car information
   for param_key in car_param_keys:
     if (param_key not in request.json):
       omitted.append(param_key)
@@ -110,9 +111,14 @@ def create_car():
   car = Car(license_plate, manufacturer, user_id)
   if (not car):
     return 'Failed to create car\n', 400
+  # Appends 
+  user_join_car = UsersJoinCars()
+  user_join_car.car = car
+  user.cars.append(user_join_car)
+
   db.add(car)
   db.commit()
-  
+
   # Retrieves car
   for param_key in car_param_keys:
     response[param_key] = car.get(param_key)
@@ -209,5 +215,5 @@ def delete_car(car_id):
 
   # Deletes car
   Car.query.filter_by(id=car_id).delete()
-  
+
   return '', 200
