@@ -5,9 +5,11 @@ from app.database import db
 from app.models import Car, Session, User
 
 from app.utils import user_param_keys, validate
-
-import jwt
 import Crypto
+import jwt
+from Crypto.PublicKey import RSA
+import os
+from datetime import *
 
 # User routes for Production
 @app.route('/users/create', methods=['POST'])
@@ -52,15 +54,17 @@ def create_user():
 
   return jsonify(response)
 
-@app.route('/users/<user_id>/identity', methods=['POST'])
-def get_identity_token(user_id):
+@app.route('/users/identifier', methods=['POST'])
+def create_identity_token():
+  email_address = request.json['email_address']
   # Grab nonce from request
-  nonce = request.POST['nonce']
-  user_id = int(user_id)
-  user = User.query.get(user_id)
+  nonce = request.json['nonce']
+
+  user = User.query.filter_by(email_address=email_address).first()
+
   # Read RSA key
   root = os.path.dirname(__file__)
-  with open(os.path.join(root, 'layer.pem'), 'r') as rsa_priv_file:
+  with open(os.path.join(root, '../..', 'layer.pem'), 'r') as rsa_priv_file:
     priv_rsakey = RSA.importKey(rsa_priv_file.read())
 
   # Create identity token
@@ -68,23 +72,29 @@ def get_identity_token(user_id):
   identityToken = jwt.encode(
     payload={
       'iss': '7b29a59c-db1b-11e4-b670-52bb02000413',  # The Layer Provider ID
-      'prn': '948374839',                             # String - Provider's internal ID for the authenticating user
+      'prn': email_address,                             # String - Provider's internal ID for the authenticating user
       'iat': datetime.now(),                          # Integer - Time of Token Issuance in RFC 3339 seconds
       'exp': datetime.utcnow() + timedelta(seconds=30),   # Integer - Arbitrary time of Token Expiration in RFC 3339 seconds
       'nce': nonce                                    # The nonce obtained via the Layer client SDK.
     },
     key=priv_rsakey,
+    algorithm='RS256',
     headers = {
       'typ': 'JWS',               # String - Expresses a MIME Type of application/JWS
-      'alg': 'RS256',             # String - Expresses the type of algorithm used to sign the token, must be RS256
+      "alg": "RS256",             # String - Expresses the type of algorithm used to sign the token, must be RS256
       'cty': 'layer-eit;v=1',     # String - Express a Content Type of Layer External Identity Token, version 1
-      'kid': '88a05500-2efe-11e4-8611-830000002b1e' # Sting - Layer Key ID used to sign the token
-    },
-    algorithm='RS256'
+      'kid': '4d3def30-dc83-11e4-852c-52bb25003d93' # Sting - Layer Key ID used to sign the token
+    }
   )
-
+  
+  identityToken = "david_please_help"
   print identityToken
-  return HttpResponse(identityToken)
+
+  response = {}
+  user.set("participant_identifier", identityToken)
+  response["participant_identifier"] = identityToken
+
+  return jsonify(response)
 
 # User routes for Development
 @app.route('/users', methods=['GET'])

@@ -15,6 +15,7 @@ class User(Base):
   password = Column(String(32), unique=False)
   phone_number = Column(String(32), unique=True)
   push_enabled = Column(Boolean(), unique=False)
+  participant_identifier = Column(String(32), unique=True)
 
   # Relationships
   # cars = relationship('Car', secondary=users_cars, backref='users')
@@ -23,13 +24,14 @@ class User(Base):
   conversations = relationship('Conversation', order_by="Conversation.id", backref='user')
 
   def __init__(self, email_address=None, first_name=None, last_name=None,
-               password=None, phone_number=None, push_enabled=None):
+               password=None, phone_number=None, push_enabled=None, participant_identifier=None):
     self.email_address = email_address
     self.first_name = first_name
     self.last_name = last_name
     self.password = password
     self.phone_number = phone_number
     self.push_enabled = push_enabled in true_strings
+    self. participant_identifier = participant_identifier
 
   def get(self, prop):
     if (prop == 'email_address'):
@@ -44,6 +46,8 @@ class User(Base):
       return self.phone_number
     if (prop == 'push_enabled'):
       return self.push_enabled
+    if (prop == 'participant_identifier'):
+      return self.participant_identifier
     if (prop == 'id'):
       return self.id
 
@@ -56,11 +60,13 @@ class User(Base):
     if (prop == 'last_name'):
       self.last_name = value
     if (prop == 'password'):
-      self.password = password
+      self.password = value
     if (prop == 'phone_number'):
       self.phone_number = value
     if (prop == 'push_enabled'):
       self.push_enabled = value in true_strings
+    if (prop == 'participant_identifier'):
+      self.participant_identifier = value
 
   def __repr__(self):
     s = ', '.join(['id="%d"' % self.id,
@@ -69,5 +75,6 @@ class User(Base):
                    'last_name="%s"' % self.last_name,
                    'password="%s"' % self.password,
                    'phone_number="%s"' % self.phone_number,
-                   'push_enabled="%r"' % self.push_enabled])
+                   'push_enabled="%r"' % self.push_enabled,
+                   'participant_identifier"%s"' % self.participant_identifier])
     return '<User(%s)>' % s
