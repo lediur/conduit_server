@@ -62,11 +62,13 @@ def create_identity_token():
 
   user = User.query.filter_by(email_address=email_address).first()
 
+  priv_rsakey = None
   # Read RSA key
   root = os.path.dirname(__file__)
   with open(os.path.join(root, '../..', 'layer.pem'), 'r') as rsa_priv_file:
-    priv_rsakey = RSA.importKey(rsa_priv_file.read())
+    priv_rsakey = rsa_priv_file.read()
 
+  print priv_rsakey
   # Create identity token
   # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
@@ -87,7 +89,6 @@ def create_identity_token():
     }
   )
   
-  identityToken = "david_please_help"
   print identityToken
 
   response = {}
