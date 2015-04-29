@@ -12,18 +12,22 @@ def get_cars():
   response = []
   cars = []
 
-  # Validates session
-  if (not request.json):
+  # # Validates session
+  if (not request.args):
+    print "no request"
     return 'Must provide session_token', 400
-  if ('session_token' not in request.json):
+  if ('session_token' not in request.args):
+    print "no session token"
     return 'Must provide session_token', 400  
-  session_token = request.json['session_token']
+  session_token = request.args['session_token']
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
+    print "no valid session"
     return 'Invalid session_token %s' % session_token, 400
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
+    print "no user for session"
     return 'Invalid session_token %s' % session_token, 400
   cars = user.cars
 
