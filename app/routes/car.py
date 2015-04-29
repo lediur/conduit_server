@@ -9,6 +9,15 @@ from app.utils import car_param_keys, validate
 # Car routes for Production
 @app.route('/cars', methods=['GET'])
 def get_cars():
+  '''
+  Route for GET /cars.
+  Accepts: 
+    @session_token -- valid identifier passed in the body of the request
+  Returns:
+    If validation succeeds -- list of cars owned by the user associated with 
+      the session given by @session_token.
+    If validation fails -- description of failure
+  '''
   response = []
   cars = []
 
@@ -38,9 +47,20 @@ def get_cars():
 
 @app.route('/cars/<car_id>', methods=['GET'])
 def get_cars_by_car_id(car_id):
+  '''
+  Route for GET /cars/<car_id>
+  Accepts:
+    @car_id -- car identifier passed in the route of the request
+    @session_token -- valid identifier passed in the body of the request
+  Returns:
+    If validation succeeds -- car associated with the car identifier @car_id
+    If validation fails -- description of failure
+  '''
   response = {}
 
   # Validates session
+  if (not request.json):
+    return 'Must provide session_token', 400
   if ('session_token' not in request.json):
     return 'Must provide session_token', 400
   session_token = request.json['session_token']
@@ -77,11 +97,27 @@ def get_cars_by_car_id(car_id):
 
 @app.route('/cars/create', methods=['POST'])
 def create_car():
+  '''
+  Route for POST /cars/create
+  Accepts:
+    @session_token -- valid identifier passed in the body of the request
+    @license_plate -- license plate passed in the body of the request
+    @manufacturer -- manufacturer passed in the body of the request
+  Description:
+    Creates a new car with license plate @license_plate and manufacturer
+    @manufacturer. Appends the new car to the list of cars owned by the
+    user associated with the session given by @session_token.
+  Returns:
+    If validation succeeds -- created car
+    If validation fails -- description of failure
+  '''
   omitted = []
   invalid = []
   response = {}
 
   # Validates session
+  if (not request.json):
+    return 'Must provide session_token', 400
   if ('session_token' not in request.json):
     return 'Must provide session_token', 400
   session_token = request.json['session_token']
@@ -105,13 +141,16 @@ def create_car():
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
   
-  # Creates car
   license_plate = request.json['license_plate']
   manufacturer = request.json['manufacturer']
-  car = Car(license_plate, manufacturer, user_id)
+
+  car = Session.query.filter_by(license_plate=license_plate).first()
   if (not car):
-    return 'Failed to create car\n', 400
-  # Appends 
+    # If car DNE, creates car
+    car = Car(license_plate, manufacturer, user_id)
+    if (not car):
+      return 'Failed to create car\n', 400
+  # Appends car to list of cars owned by user
   user_join_car = UsersJoinCars()
   user_join_car.car = car
   user.cars.append(user_join_car)
@@ -128,6 +167,20 @@ def create_car():
 
 @app.route('/cars/<car_id>/update', methods=['POST'])
 def update_car(car_id):
+  '''
+  Route for POST /cars/<car_id>/update
+  Accepts:
+    @car_id -- car identifier passed in the route of the request
+    @session_token -- valid identifier passed in the body of the request
+    @license_plate -- optional license plate passed in the body of the request
+    @manufacturer -- optional manufacturer passed in the body of the request
+  Description:
+    Updates an existing car with license plate @license_plate or manufacturer
+    @manufacturer.
+  Returns:
+    If validation succeeds -- updates car
+    If validation fails -- description of failure
+  '''
   present = []
   invalid = []
   response = {}
@@ -185,6 +238,17 @@ def update_car(car_id):
 
 @app.route('/cars/<car_id>', methods=['DELETE'])
 def delete_car(car_id):
+    '''
+  Route for DELETE /cars/<car_id>
+  Accepts:
+    @car_id -- car identifier passed in the route of the request
+    @session_token -- valid identifier passed in the body of the request
+  Description:
+    Deletes an existing car with car identifier @car_id.
+  Returns:
+    If validation succeeds -- description of success
+    If validation fails -- description of failure
+  '''
     # Validates session
   if ('session_token' not in request.json):
     return 'Must provide session_token', 400
@@ -216,4 +280,4 @@ def delete_car(car_id):
   # Deletes car
   Car.query.filter_by(id=car_id).delete()
 
-  return '', 200
+  return 'Delete successful', 200

@@ -67,12 +67,15 @@ def create_identity_token():
   with open(os.path.join(root, '../..', 'layer.pem'), 'r') as rsa_priv_file:
     priv_rsakey = RSA.importKey(rsa_priv_file.read())
 
+  print priv_rsakey
+  print '\n\n\n\n\n\n\n\n\n\n'
+
   # Create identity token
   # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
     payload={
       'iss': '7b29a59c-db1b-11e4-b670-52bb02000413',  # The Layer Provider ID
-      'prn': email_address,                             # String - Provider's internal ID for the authenticating user
+      'prn': email_address,                               # String - Provider's internal ID for the authenticating user
       'iat': datetime.now(),                          # Integer - Time of Token Issuance in RFC 3339 seconds
       'exp': datetime.utcnow() + timedelta(seconds=30),   # Integer - Arbitrary time of Token Expiration in RFC 3339 seconds
       'nce': nonce                                    # The nonce obtained via the Layer client SDK.
@@ -87,9 +90,6 @@ def create_identity_token():
     }
   )
   
-  identityToken = "david_please_help"
-  print identityToken
-
   response = {}
   user.set("participant_identifier", identityToken)
   response["participant_identifier"] = identityToken
