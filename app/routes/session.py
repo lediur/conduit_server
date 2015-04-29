@@ -4,7 +4,7 @@ from app.database import db
 
 from app.models import Session, User
 
-from app.utils import session_param_keys, user_param_login_keys, validate
+from app.utils import user_param_keys, session_param_keys, user_param_login_keys, validate
 
 import datetime
 import uuid
@@ -39,8 +39,8 @@ def create_session():
   password = request.json['password']
 
   user = User.query.filter_by(email_address=email_address)\
-                .filter_by(password=password)\
-                .first()
+                   .filter_by(password=password)\
+                   .first()
 
   if (not user):
     return 'Invalid login credentials', 400
@@ -55,7 +55,14 @@ def create_session():
     return 'Failed to create session\n', 400
   db.add(session)
   db.commit()
-  return jsonify(session_token=session.get('session_token'))
+
+  user_props = {}
+  for param_key in user_param_keys:
+    user_props[param_key] = user.get(param_key)
+  user_props['id'] = user.id
+  user_props['participant_identifier'] = user.participant_identifier
+
+  return jsonify(session_token=session.get('session_token'), user=user_props)
 
 # Session routes for Development
 @app.route('/sessions', methods=['GET'])
