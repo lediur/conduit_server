@@ -111,6 +111,7 @@ def get_users():
     users = Car.query.get(car_id).users
   elif ('license_plate' in request.args):
     license_plate = request.args['license_plate']
+    # todo: this doesn't work because there is only one user associated with a car?
     users = Car.query.filter_by(license_plate=license_plate).first().users
   else:
     users = User.query.all()
