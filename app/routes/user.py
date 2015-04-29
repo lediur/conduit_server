@@ -62,14 +62,18 @@ def create_identity_token():
 
   user = User.query.filter_by(email_address=email_address).first()
 
+  priv_rsakey = None
   # Read RSA key
   root = os.path.dirname(__file__)
   with open(os.path.join(root, '../..', 'layer.pem'), 'r') as rsa_priv_file:
-    priv_rsakey = RSA.importKey(rsa_priv_file.read())
+    priv_rsakey = rsa_priv_file.read()
 
   print priv_rsakey
+<<<<<<< HEAD
   print '\n\n\n\n\n\n\n\n\n\n'
 
+=======
+>>>>>>> origin
   # Create identity token
   # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
@@ -90,6 +94,11 @@ def create_identity_token():
     }
   )
   
+<<<<<<< HEAD
+=======
+  print identityToken
+
+>>>>>>> origin
   response = {}
   user.set("participant_identifier", identityToken)
   response["participant_identifier"] = identityToken
@@ -100,8 +109,8 @@ def create_identity_token():
 @app.route('/users', methods=['GET'])
 def get_users():
   '''
-  If the request includes 'car_id' as a query string parameter, returns all
-  owners of the car. Otherwise, returns all users.
+  If the request includes 'car_id' or 'license_plate' as a query string 
+  parameter, returns all owners of the car. Otherwise, returns all users.
   '''
   response = []
   users = []
@@ -109,6 +118,10 @@ def get_users():
   if ('car_id' in request.args):
     car_id = request.args['car_id']
     users = Car.query.get(car_id).users
+  elif ('license_plate' in request.args):
+    license_plate = request.args['license_plate']
+    # todo: this doesn't work because there is only one user associated with a car?
+    users = Car.query.filter_by(license_plate=license_plate).first().users
   else:
     users = User.query.all()
 
