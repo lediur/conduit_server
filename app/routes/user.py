@@ -69,11 +69,6 @@ def create_identity_token():
     priv_rsakey = rsa_priv_file.read()
 
   print priv_rsakey
-<<<<<<< HEAD
-  print '\n\n\n\n\n\n\n\n\n\n'
-
-=======
->>>>>>> origin
   # Create identity token
   # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
@@ -94,11 +89,6 @@ def create_identity_token():
     }
   )
   
-<<<<<<< HEAD
-=======
-  print identityToken
-
->>>>>>> origin
   response = {}
   user.set("participant_identifier", identityToken)
   response["participant_identifier"] = identityToken
@@ -115,7 +105,7 @@ def get_users():
   response = []
   users = []
 
-  if ('car_id' in request.args):
+  if ('car_id' in request.json):
     car_id = request.args['car_id']
     users = Car.query.get(car_id).users
   elif ('license_plate' in request.args):
