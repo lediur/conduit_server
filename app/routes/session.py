@@ -41,7 +41,8 @@ def create_session():
   user = User.query.filter_by(email_address=email_address)\
                    .filter_by(password=password)\
                    .first()
-
+  print 'HERE!'
+  print User.query.all()
   if (not user):
     return 'Invalid login credentials', 400
 
@@ -51,6 +52,7 @@ def create_session():
   user_id = user.id
 
   session = Session(session_token, timestamp, user_id)
+  
   if (not session):
     return 'Failed to create session\n', 400
   db.add(session)

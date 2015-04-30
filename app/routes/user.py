@@ -2,9 +2,9 @@ from flask import jsonify, request, session
 from app import app
 from app.database import db
 
-from app.models import Car, Session, User
+from app.models import Car, Session, User, UsersJoinCars
 
-from app.utils import user_param_keys, validate
+from app.utils import car_param_keys, user_param_keys, validate
 import Crypto
 import jwt
 from Crypto.PublicKey import RSA
@@ -152,6 +152,9 @@ def update_user(session_token):
   # Updates user
   for param_key in present:
     user.set(param_key, request.json[param_key])
+
+  #db.add(user)
+  db.commit()
 
   # Retrieves user
   for param_key in user_param_keys:
@@ -455,6 +458,7 @@ def create_identity_token():
 
   response = {}
   user.set("participant_identifier", identityToken)
+  db.commit()
   response["participant_identifier"] = identityToken
 
   return jsonify(response)
