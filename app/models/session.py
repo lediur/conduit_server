@@ -37,8 +37,7 @@ class Session(Base):
       self.user_id = int(value)
 
   def __repr__(self):
-    s = ', '.join(['id="%d"' % self.id,
-                   'session_token="%s"' % self.session_token,
+    s = ', '.join(['session_token="%s"' % self.session_token,
                    'timestamp="%s"' % self.timestamp,
                    'user_id="%d"' % self.user_id])
     return '<Session(%s)>' % s

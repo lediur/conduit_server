@@ -2,7 +2,7 @@ from flask import jsonify, request
 from app import app
 from app.database import db
 
-from app.models import Car, Session, User, UsersJoinCars
+from app.models import Car, Session, User
 
 from app.utils import car_param_keys, user_param_keys, validate
 
@@ -30,7 +30,6 @@ def get_subscribers(license_plate):
   car = Car.query.filter_by(license_plate=license_plate).first()
   if (not car):
     return 'Invalid license_plate %s' % license_plate, 400
-
   car_id = car.id
 
   for association in car.users:
@@ -43,5 +42,6 @@ def get_subscribers(license_plate):
     for param_key in user_param_keys:
       user_props[param_key] = user.get(param_key)
     user_props['id'] = user.id
+    user_props['participant_identifier'] = user.participant_identifier
     response.append(user_props)
   return jsonify(users=response)

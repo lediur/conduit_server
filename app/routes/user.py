@@ -153,6 +153,9 @@ def update_user(session_token):
   for param_key in present:
     user.set(param_key, request.json[param_key])
 
+  #db.add(user)
+  db.commit()
+
   # Retrieves user
   for param_key in user_param_keys:
     response[param_key] = user.get(param_key)
@@ -452,6 +455,7 @@ def create_identity_token():
 
   response = {}
   user.set("participant_identifier", identityToken)
+  db.commit()
   response["participant_identifier"] = identityToken
 
   return jsonify(response)

@@ -41,17 +41,19 @@ def create_session():
   user = User.query.filter_by(email_address=email_address)\
                    .filter_by(password=password)\
                    .first()
-
+  print 'HERE!'
+  print User.query.all()
   if (not user):
     return 'Invalid login credentials', 400
 
   # Create session
-  # session_token = str(uuid.uuid4())
-  session_token = "imma_session_token"
+  session_token = str(uuid.uuid4())
+  # session_token = "imma_session_token"
   timestamp = datetime.datetime.utcnow()
   user_id = user.id
 
   session = Session(session_token, timestamp, user_id)
+  
   if (not session):
     return 'Failed to create session\n', 400
   db.add(session)
