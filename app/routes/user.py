@@ -2,9 +2,9 @@ from flask import jsonify, request, session
 from app import app
 from app.database import db
 
-from app.models import Car, Session, User
+from app.models import Car, Session, User, UsersJoinCars
 
-from app.utils import user_param_keys, validate
+from app.utils import car_param_keys, user_param_keys, validate
 import Crypto
 import jwt
 from Crypto.PublicKey import RSA
@@ -218,9 +218,6 @@ def get_cars(session_token):
     if (association.users_id == user_id):
       car_id = association.cars_id
       cars.append(Car.query.get(car_id))
-
-  # This, of all things, crashes
-  # print cars
 
   # Retrives cars
   for car in cars:

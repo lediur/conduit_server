@@ -4,7 +4,7 @@ from app.database import db
 
 from app.models import Car, Session, User, UsersJoinCars
 
-from app.utils import car_param_keys, validate
+from app.utils import car_param_keys, user_param_keys, validate
 
 # Car routes for Production
 @app.route('/cars/<license_plate>/users', methods=['GET'])
@@ -30,7 +30,13 @@ def get_subscribers(license_plate):
   car = Car.query.filter_by(license_plate=license_plate).first()
   if (not car):
     return 'Invalid license_plate %s' % license_plate, 400
-  users = car.users
+
+  car_id = car.id
+
+  for association in car.users:
+    if (association.cars_id == car_id):
+      user_id = association.users_id
+      users.append(User.query.get(user_id))
 
   for user in users:
     user_props = {}

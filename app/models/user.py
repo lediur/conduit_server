@@ -2,8 +2,6 @@ from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-# from app.models import users_cars
-
 from app.utils import true_strings, false_strings
 
 class User(Base):
@@ -19,6 +17,7 @@ class User(Base):
 
   # Relationships
   # cars = relationship('Car', secondary=users_cars, backref='users')
+  # cars = relationship('cars', secondary=UsersJoinCars, backref='User')
   cars = relationship('UsersJoinCars')
   sessions = relationship("Session", order_by="Session.id", backref="user")
   conversations = relationship('Conversation', order_by="Conversation.id", backref='user')

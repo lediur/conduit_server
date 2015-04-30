@@ -12,6 +12,7 @@ class Car(Base):
 
   # Relationships
   conversations = relationship('Conversation', order_by="Conversation.id", backref='car')
+  users = relationship('UsersJoinCars')
 
   def __init__(self, license_plate=None, manufacturer=None, user_id=None):
     self.license_plate = license_plate

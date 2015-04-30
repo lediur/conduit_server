@@ -4,7 +4,7 @@ from app.database import Base
 
 # Message belongs to a conversation
 class Session(Base):
-  __tablename__ = 'seshs'
+  __tablename__ = 'sessions'
   id = Column(Integer, primary_key=True)
   session_token = Column(String(1024), unique=True)
   timestamp = Column(DateTime(), unique=False)

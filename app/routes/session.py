@@ -46,7 +46,8 @@ def create_session():
     return 'Invalid login credentials', 400
 
   # Create session
-  session_token = str(uuid.uuid4())
+  # session_token = str(uuid.uuid4())
+  session_token = "imma_session_token"
   timestamp = datetime.datetime.utcnow()
   user_id = user.id
 

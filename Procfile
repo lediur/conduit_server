@@ -1,1 +1,1 @@
-web: python run.py --log-file=- 
+web: env/bin/python run.py --log-file=- 
