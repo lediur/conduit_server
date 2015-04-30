@@ -7,24 +7,30 @@ from app.models import Car, Session, User, UsersJoinCars
 from app.utils import car_param_keys, validate
 
 # Car routes for Production
-@app.route('/users', methods=['GET'])
-def get_users():
-  '''
-  If the request includes 'car_id' or 'license_plate' as a query string
-  parameter, returns all owners of the car. Otherwise, returns all users.
-  '''
+@app.route('/cars/<license_plate>/users', methods=['GET'])
+def get_subscribers(license_plate):
   response = []
   users = []
 
-  if ('car_id' in request.json):
-    car_id = request.args['car_id']
-    users = Car.query.get(car_id).users
-  elif ('license_plate' in request.args):
-    license_plate = request.args['license_plate']
-    users = Car.query.filter_by(license_plate=license_plate)\
-                     .first().users
-  else:
-    users = User.query.all()
+  # Validates session
+  session_token = request.args['session_token']
+  if (not session_token):
+    return 'Must provide session_token', 400
+  session = Session.query.filter_by(session_token=session_token).first()
+  if (not session):
+    return 'Invalid session_token %s' % session_token, 400
+  user_id = session.user_id
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Invalid session_token %s' % session_token, 400
+
+  # Validates license plate
+  if (not license_plate):
+    return 'Must provide license_plate', 400
+  car = Car.query.filter_by(license_plate=license_plate).first()
+  if (not car):
+    return 'Invalid license_plate %s' % license_plate, 400
+  users = car.users
 
   for user in users:
     user_props = {}

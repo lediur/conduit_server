@@ -15,7 +15,7 @@ from datetime import *
 # Get, Create, Update, Delete users
 #==============================================================================
 @app.route('/users/<session_token>', methods=['GET'])
-def get_users(session_token):
+def get_user(session_token):
   '''
   Route for GET /users/<session_token>
   Accepts:
@@ -459,31 +459,11 @@ def create_identity_token():
 
   return jsonify(response)
 
-# User routes for Development
-@app.route('/users/<user_id>', methods=['GET'])
-def get_users_by_user_id(user_id):
-  '''
-  If the request includes 'user_id' as route string parameter, returns the
-  corresponding user. Otherwise, returns 400 Bad Request Error.
-  '''
-  response = {}
-
-  user_id = int(user_id)
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Cannot find user_id %d\n' % user_id, 400
-
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
-  return jsonify(response)
-
 #============================================================================
 # Extra shit
 #============================================================================
 @app.route('/users/<session_token>/cars/<car_id>', methods=['GET'])
-def get_cars_by_car_id(session_token, car_id):
+def get_car(session_token, car_id):
   '''
   Route for GET /users/<session_token>/cars/<car_id>
   Accepts:
@@ -527,4 +507,24 @@ def get_cars_by_car_id(session_token, car_id):
     response[param_key] = car.get(param_key)
   response['id'] = car.id
 
-  return jsonify(response)  
+  return jsonify(response)
+
+# User routes for Development
+@app.route('/users/<user_id>', methods=['GET'])
+def get_users_by_user_id(user_id):
+  '''
+  If the request includes 'user_id' as route string parameter, returns the
+  corresponding user. Otherwise, returns 400 Bad Request Error.
+  '''
+  response = {}
+
+  user_id = int(user_id)
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Cannot find user_id %d\n' % user_id, 400
+
+  for param_key in user_param_keys:
+    response[param_key] = user.get(param_key)
+  response['id'] = user.id
+
+  return jsonify(response)
