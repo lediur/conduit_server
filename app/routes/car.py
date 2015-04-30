@@ -37,7 +37,8 @@ def get_cars(session_token):
       car_id = association.cars_id
       cars.append(Car.query.get(car_id))
 
-  print cars
+  # This, of all things, crashes
+  # print cars
 
   # Retrives cars
   for car in cars:
