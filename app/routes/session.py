@@ -10,6 +10,32 @@ import datetime
 import uuid
 
 # Session routes for Production
+@app.route('/session/<session_token>', methods=['GET'])
+def get_users_by_session_token(session_token):
+  '''
+  If the request includes 'session_token' as route string parameter, returns the
+  corresponding user for that session token. Otherwise, returns 400 Bad Request Error.
+  '''
+  response = {}
+
+    # Validates session
+  if (not session_token):
+    return 'Must provide session_token', 400
+
+  session = Session.query.filter_by(session_token=session_token).first()
+  if (not session):
+    return 'Invalid session_token %s' % session_token, 400
+  user_id = session.user_id
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Invalid session_token %s' % session_token, 400
+
+  for param_key in user_param_keys:
+    response[param_key] = user.get(param_key)
+  response['id'] = user.id
+
+  return jsonify(response)
+
 @app.route('/sessions/create', methods=['POST'])
 def create_session():
   '''

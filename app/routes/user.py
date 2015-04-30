@@ -49,17 +49,15 @@ def create_user():
   invalid = []
   response = {}
 
+  # Validates user information
   for param_key in user_param_keys:
     if (param_key not in request.json):
       omitted.append(param_key)
-
   if (len(omitted) > 0):
     return 'Must provide %s\n' % ', '.join(omitted), 400
-
   for param_key in user_param_keys:
     if (not validate(param_key, request.json[param_key])):
       invalid.append(param_key)
-
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
 
@@ -70,6 +68,10 @@ def create_user():
   phone_number = request.json['phone_number']
   push_enabled = request.json['push_enabled']
 
+  user = User.query.filter_by(email_address=email_address).first()
+  if (user):
+    # If user exists, do not create user
+    return 'Failed to create user\n', 400
   user = User(email_address, first_name, last_name, password, phone_number, push_enabled)
   if (not user):
     return 'Failed to create user\n', 400
@@ -80,6 +82,62 @@ def create_user():
     response[param_key] = user.get(param_key)
 
   return jsonify(response)
+
+@app.route('/users/<session_token>/update', methods=['POST'])
+def update_user(session_token):
+  present = []
+  invalid = []
+  response = {}
+
+  # Validates session
+  if (not session_token):
+    return 'Must provide session_token', 400
+  session = Session.query.filter_by(session_token=session_token).first()
+  if (not session):
+    return 'Invalid session_token %s' % session_token, 400
+  user_id = session.user_id
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Invalid session_token %s' % session_token, 400
+
+  # Validates updated user information
+  for param_key in user_param_keys:
+    if (param_key in request.json):
+      present.append(param_key)
+  if (len(present) == 0):
+    return 'Must provide at least one parameter\n', 400
+  for param_key in present:
+    if (not validate(param_key, request.json[param_key])):
+      invalid.append(param_key)
+  if (len(invalid) > 0):
+    return 'Invalid %s\n' % ', '.join(invalid), 400
+
+  # Updates user
+  for param_key in present:
+    user.set(param_key, request.json[param_key])
+
+  # Retrieves user
+  for param_key in user_param_keys:
+    response[param_key] = user.get(param_key)
+  response['id'] = user.id
+
+  return jsonify(response)
+
+@app.route('/users/<session_token>', methods=['DELETE'])
+def delete_user(session_token):
+  # Validates session
+  if (not session_token):
+    return 'Must provide session_token', 400
+  session = Session.query.filter_by(session_token=session_token).first()
+  if (not session):
+    return 'Invalid session_token %s' % session_token, 400
+  user_id = session.user_id
+  user = User.query.get(user_id)
+  if (not user):
+    return 'Invalid session_token %s' % session_token, 400
+
+  User.query.filter_by(id=user_id).delete()
+  return '', 200
 
 @app.route('/users/identifier', methods=['POST'])
 def create_identity_token():
@@ -141,73 +199,3 @@ def get_users_by_user_id(user_id):
   response['id'] = user.id
 
   return jsonify(response)
-
-
-@app.route('/<session_token>/users', methods=['GET'])
-def get_users_by_session_token(session_token):
-  '''
-  If the request includes 'session_token' as route string parameter, returns the
-  corresponding user for that session token. Otherwise, returns 400 Bad Request Error.
-  '''
-  response = {}
-
-    # Validates session
-  if (not session_token):
-    return 'Must provide session_token', 400
-
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return 'Invalid session_token %s' % session_token, 400
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Invalid session_token %s' % session_token, 400
-
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
-  return jsonify(response)
-
-@app.route('/users/<user_id>/update', methods=['POST'])
-def update_user(user_id):
-  present = []
-  invalid = []
-  response = {}
-
-  for param_key in user_param_keys:
-    if (param_key in request.json):
-      present.append(param_key)
-
-  if (len(present) == 0):
-    return 'Must provide at least one parameter\n', 400
-
-  for param_key in present:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-
-  if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
-
-  user_id = int(user_id)
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Cannot find user_id %d\n' % user_id, 400
-
-  for param_key in present:
-    user.set(param_key, request.json[param_key])
-
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
-  return jsonify(response)
-
-@app.route('/users/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-  user_id = int(user_id)
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Cannot find user_id %d\n' % user_id, 400
-  User.query.filter_by(id=user_id).delete()
-  return '', 200

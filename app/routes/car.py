@@ -7,10 +7,10 @@ from app.models import Car, Session, User, UsersJoinCars
 from app.utils import car_param_keys, validate
 
 # Car routes for Production
-@app.route('/cars/<session_token>', methods=['GET'])
+@app.route('/users/<session_token>/cars', methods=['GET'])
 def get_cars(session_token):
   '''
-  Route for GET /cars.
+  Route for GET /users/<session_token>/cars.
   Accepts:
     @session_token -- valid identifier passed in the body of the request
   Returns:
@@ -49,10 +49,10 @@ def get_cars(session_token):
     response.append(car_props)
   return jsonify(cars=response)
 
-@app.route('/cars/<car_id>', methods=['GET'])
-def get_cars_by_car_id(car_id):
+@app.route('/users/<session_token>/cars/<car_id>', methods=['GET'])
+def get_cars_by_car_id(session_token, car_id):
   '''
-  Route for GET /cars/<car_id>
+  Route for GET /users/<session_token>/cars/<car_id>
   Accepts:
     @car_id -- car identifier passed in the route of the request
     @session_token -- valid identifier passed in the body of the request
@@ -63,11 +63,8 @@ def get_cars_by_car_id(car_id):
   response = {}
 
   # Validates session
-  if (not request.json):
+  if (not session_token):
     return 'Must provide session_token', 400
-  if ('session_token' not in request.json):
-    return 'Must provide session_token', 400
-  session_token = request.json['session_token']
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
@@ -99,10 +96,10 @@ def get_cars_by_car_id(car_id):
 
   return jsonify(response)
 
-@app.route('/<session_token>/cars/create', methods=['POST'])
+@app.route('/users/<session_token>/cars/create', methods=['POST'])
 def create_car(session_token):
   '''
-  Route for POST /cars/create
+  Route for POST /users/<session_token>/cars/create
   Accepts:
     @session_token -- valid identifier passed in the body of the request
     @license_plate -- license plate passed in the body of the request
@@ -122,7 +119,6 @@ def create_car(session_token):
   # Validates session
   if (not session_token):
     return 'Must provide session_token', 400
-
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
@@ -130,7 +126,6 @@ def create_car(session_token):
   user = User.query.get(user_id)
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
-
 
   # Validates car information
   if (not request.json):
@@ -170,10 +165,10 @@ def create_car(session_token):
 
   return jsonify(response)
 
-@app.route('/cars/<car_id>/update', methods=['POST'])
-def update_car(car_id):
+@app.route('/users/<session_token>/cars/<car_id>', methods=['UPDATE'])
+def update_car(sesion_token, car_id):
   '''
-  Route for POST /cars/<car_id>/update
+  Route for POST /users/<session_token>/cars/<car_id>/update
   Accepts:
     @car_id -- car identifier passed in the route of the request
     @session_token -- valid identifier passed in the body of the request
@@ -191,9 +186,8 @@ def update_car(car_id):
   response = {}
 
   # Validates session
-  if ('session_token' not in request.json):
+  if (not session_token):
     return 'Must provide session_token', 400
-  session_token = request.json['session_token']
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
@@ -218,7 +212,7 @@ def update_car(car_id):
   if (not car):
     return 'Cannot find car_id %d\n' % car_id, 400
 
-  # Validates updated information for car
+  # Validates updated car information
   for param_key in car_param_keys:
     if (param_key in request.json):
       present.append(param_key)
@@ -241,10 +235,10 @@ def update_car(car_id):
 
   return jsonify(response)
 
-@app.route('/cars/<car_id>', methods=['DELETE'])
-def delete_car(car_id):
+@app.route('/users/<session_token>/cars/<car_id>', methods=['DELETE'])
+def delete_car(session_token, car_id):
   '''
-  Route for DELETE /cars/<car_id>
+  Route for DELETE /users/<session_token>/cars/<car_id>
   Accepts:
     @car_id -- car identifier passed in the route of the request
     @session_token -- valid identifier passed in the body of the request
@@ -255,9 +249,8 @@ def delete_car(car_id):
     If validation fails -- description of failure
   '''
   # Validates session
-  if ('session_token' not in request.json):
+  if (not session_token):
     return 'Must provide session_token', 400
-  session_token = request.json['session_token']
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
