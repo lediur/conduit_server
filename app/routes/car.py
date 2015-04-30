@@ -7,26 +7,23 @@ from app.models import Car, Session, User, UsersJoinCars
 from app.utils import car_param_keys, validate
 
 # Car routes for Production
-@app.route('/cars', methods=['GET'])
-def get_cars():
+@app.route('/cars/<session_token>', methods=['GET'])
+def get_cars(session_token):
   '''
   Route for GET /cars.
-  Accepts: 
+  Accepts:
     @session_token -- valid identifier passed in the body of the request
   Returns:
-    If validation succeeds -- list of cars owned by the user associated with 
+    If validation succeeds -- list of cars owned by the user associated with
       the session given by @session_token.
     If validation fails -- description of failure
   '''
   response = []
   cars = []
 
-  # # Validates session
-  if (not request.json):
+  # Validates session
+  if (not session_token):
     return 'Must provide session_token', 400
-  if ('session_token' not in request.json):
-    return 'Must provide session_token', 400  
-  session_token = request.json['session_token']
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
@@ -34,7 +31,13 @@ def get_cars():
   user = User.query.get(user_id)
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
-  cars = user.cars
+
+  for association in user.cars:
+    if (association.users_id == user_id):
+      car_id = association.cars_id
+      cars.append(Car.query.get(car_id))
+
+  print cars
 
   # Retrives cars
   for car in cars:
@@ -72,7 +75,7 @@ def get_cars_by_car_id(car_id):
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
   cars = user.cars
-  
+
   # Validates car_id
   try:
     car_id = int(car_id)
@@ -95,8 +98,8 @@ def get_cars_by_car_id(car_id):
 
   return jsonify(response)
 
-@app.route('/cars/create', methods=['POST'])
-def create_car():
+@app.route('/<session_token>/cars/create', methods=['POST'])
+def create_car(session_token):
   '''
   Route for POST /cars/create
   Accepts:
@@ -116,11 +119,9 @@ def create_car():
   response = {}
 
   # Validates session
-  if (not request.json):
+  if (not session_token):
     return 'Must provide session_token', 400
-  if ('session_token' not in request.json):
-    return 'Must provide session_token', 400
-  session_token = request.json['session_token']
+
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
     return 'Invalid session_token %s' % session_token, 400
@@ -129,7 +130,10 @@ def create_car():
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
 
+
   # Validates car information
+  if (not request.json):
+    return 'Must provide %s\n' % ', '.join(car_param_keys), 400
   for param_key in car_param_keys:
     if (param_key not in request.json):
       omitted.append(param_key)
@@ -140,11 +144,11 @@ def create_car():
       invalid.append(param_key)
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
-  
+
   license_plate = request.json['license_plate']
   manufacturer = request.json['manufacturer']
 
-  car = Session.query.filter_by(license_plate=license_plate).first()
+  car = Car.query.filter_by(license_plate=license_plate).first()
   if (not car):
     # If car DNE, creates car
     car = Car(license_plate, manufacturer, user_id)
@@ -197,7 +201,7 @@ def update_car(car_id):
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
   cars = user.cars
-  
+
   # Validates car_id
   try:
     car_id = int(car_id)
@@ -238,7 +242,7 @@ def update_car(car_id):
 
 @app.route('/cars/<car_id>', methods=['DELETE'])
 def delete_car(car_id):
-    '''
+  '''
   Route for DELETE /cars/<car_id>
   Accepts:
     @car_id -- car identifier passed in the route of the request
@@ -249,7 +253,7 @@ def delete_car(car_id):
     If validation succeeds -- description of success
     If validation fails -- description of failure
   '''
-    # Validates session
+  # Validates session
   if ('session_token' not in request.json):
     return 'Must provide session_token', 400
   session_token = request.json['session_token']
@@ -261,7 +265,7 @@ def delete_car(car_id):
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
   cars = user.cars
-  
+
   # Validates car_id
   try:
     car_id = int(car_id)

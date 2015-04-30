@@ -15,7 +15,7 @@ from datetime import *
 @app.route('/users', methods=['GET'])
 def get_users():
   '''
-  If the request includes 'car_id' or 'license_plate' as a query string 
+  If the request includes 'car_id' or 'license_plate' as a query string
   parameter, returns all owners of the car. Otherwise, returns all users.
   '''
   response = []
@@ -62,7 +62,7 @@ def create_user():
 
   if (len(invalid) > 0):
     return 'Invalid %s\n' % ', '.join(invalid), 400
-  
+
   email_address = request.json['email_address']
   first_name = request.json['first_name']
   last_name  = request.json['last_name']
@@ -75,7 +75,7 @@ def create_user():
     return 'Failed to create user\n', 400
   db.add(user)
   db.commit()
-  
+
   for param_key in user_param_keys:
     response[param_key] = user.get(param_key)
 
@@ -89,13 +89,13 @@ def create_identity_token():
 
   user = User.query.filter_by(email_address=email_address).first()
 
-  priv_rsakey = None
+  private_rsa_key = None
   # Read RSA key
   root = os.path.dirname(__file__)
   with open(os.path.join(root, '../..', 'layer.pem'), 'r') as rsa_priv_file:
-    priv_rsakey = rsa_priv_file.read()
+    private_rsa_key = rsa_priv_file.read()
 
-  print priv_rsakey
+  print private_rsa_key
   # Create identity token
   # Make sure you have PyJWT and PyCrypto libraries installed and imported
   identityToken = jwt.encode(
@@ -106,7 +106,7 @@ def create_identity_token():
       'exp': datetime.utcnow() + timedelta(seconds=30),   # Integer - Arbitrary time of Token Expiration in RFC 3339 seconds
       'nce': nonce                                    # The nonce obtained via the Layer client SDK.
     },
-    key=priv_rsakey,
+    key=private_rsa_key,
     algorithm='RS256',
     headers = {
       'typ': 'JWS',               # String - Expresses a MIME Type of application/JWS
@@ -115,7 +115,7 @@ def create_identity_token():
       'kid': '4d3def30-dc83-11e4-852c-52bb25003d93' # Sting - Layer Key ID used to sign the token
     }
   )
-  
+
   response = {}
   user.set("participant_identifier", identityToken)
   response["participant_identifier"] = identityToken
@@ -130,7 +130,7 @@ def get_users_by_user_id(user_id):
   corresponding user. Otherwise, returns 400 Bad Request Error.
   '''
   response = {}
-  
+
   user_id = int(user_id)
   user = User.query.get(user_id)
   if (not user):
