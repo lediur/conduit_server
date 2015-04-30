@@ -10,7 +10,7 @@ import datetime
 import uuid
 
 # Session routes for Production
-@app.route('/sessions/create', methods=['POST'])
+@app.route('/sessions', methods=['POST'])
 def create_session():
   '''
   If the request includes 'email_address' and 'password' as body parameters,
