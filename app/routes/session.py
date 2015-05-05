@@ -63,7 +63,6 @@ def create_session():
   for param_key in user_param_keys:
     user_props[param_key] = user.get(param_key)
   user_props['id'] = user.id
-  user_props['participant_identifier'] = user.participant_identifier
 
   return jsonify(session_token=session.get('session_token'), user=user_props)
 

@@ -418,7 +418,7 @@ def delete_car(session_token, car_id):
 #==============================================================================
 #
 #==============================================================================
-@app.route('/users/identifier', methods=['POST'])
+@app.route('/users/identity', methods=['POST'])
 def create_identity_token():
   email_address = request.json['email_address']
   # Grab nonce from request
@@ -454,9 +454,8 @@ def create_identity_token():
   )
 
   response = {}
-  user.set("participant_identifier", identityToken)
-  db.commit()
-  response["participant_identifier"] = identityToken
+  response["identity"] = identityToken
+  # Note: This should NOT be persisted on the client or server.
 
   return jsonify(response)
 
