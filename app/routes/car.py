@@ -41,7 +41,6 @@ def get_subscribers(license_plate):
     user_props = {}
     for param_key in user_param_keys:
       user_props[param_key] = user.get(param_key)
-    user_props['id'] = user.id
-    user_props['participant_identifier'] = user.participant_identifier
     response.append(user_props)
+
   return jsonify(users=response)
