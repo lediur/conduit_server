@@ -66,6 +66,7 @@ def create_user():
   '''
   omitted = []
   invalid = []
+  exists = []
   response = {}
 
   # Validates user information
@@ -87,10 +88,15 @@ def create_user():
   phone_number = request.json['phone_number']
   push_enabled = request.json['push_enabled']
 
-  user = User.query.filter_by(email_address=email_address).first()
-  if (user):
+  if (User.query.filter_by(email_address=email_address).first()):
+    exists.append('email_address')
+  if (User.query.filter_by(phone_number=phone_number).first()):
+    exists.append('phone_number')
+
+  if (len(exists) > 0):
     # If user exists, do not create user
-    return 'Failed to create user\n', 400
+    return 'Specified %s exists\n' % ', '.join(exists), 400
+
   user = User(email_address, first_name, last_name, password, phone_number, push_enabled)
   if (not user):
     return 'Failed to create user\n', 400
