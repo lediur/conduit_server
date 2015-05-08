@@ -9,6 +9,8 @@ from app.utils import user_param_keys, session_param_keys, user_param_login_keys
 import datetime
 import uuid
 
+from passlib.hash import sha256_crypt
+
 # Session routes for Production
 @app.route('/sessions', methods=['POST'])
 def create_session():
@@ -39,12 +41,14 @@ def create_session():
   password = request.json['password']
 
   user = User.query.filter_by(email_address=email_address)\
-                   .filter_by(password=password)\
                    .first()
-  print 'HERE!'
-  print User.query.all()
+
   if (not user):
     return 'Invalid login credentials', 400
+
+  if (not sha256_crypt.verify(password, user.password)):
+    return 'Invalid login credentials', 400
+
 
   # Create session
   session_token = str(uuid.uuid4())

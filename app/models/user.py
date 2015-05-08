@@ -10,7 +10,7 @@ class User(Base):
   email_address = Column(String(64), unique=True)
   first_name = Column(String(32), unique=False)
   last_name = Column(String(32), unique=False)
-  password = Column(String(32), unique=False)
+  password = Column(String(128), unique=False)
   phone_number = Column(String(32), unique=True)
   push_enabled = Column(Boolean(), unique=False)
 

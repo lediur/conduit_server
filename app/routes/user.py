@@ -10,6 +10,7 @@ import jwt
 from Crypto.PublicKey import RSA
 import os
 from datetime import *
+from passlib.hash import sha256_crypt
 
 #==============================================================================
 # Get, Create, Update, Delete users
@@ -84,7 +85,7 @@ def create_user():
   email_address = request.json['email_address']
   first_name = request.json['first_name']
   last_name  = request.json['last_name']
-  password = request.json['password']
+  password = sha256_crypt.encrypt(request.json['password'])
   phone_number = request.json['phone_number']
   push_enabled = request.json['push_enabled']
 
@@ -157,7 +158,11 @@ def update_user(session_token):
 
   # Updates user
   for param_key in present:
-    user.set(param_key, request.json[param_key])
+    if (param_key == "password"):
+      password = sha256_crypt.encrypt(request.json[param_key])
+      user.set(param_key, password)
+    else:  
+      user.set(param_key, request.json[param_key])
 
   #db.add(user)
   db.commit()
