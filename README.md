@@ -8,8 +8,8 @@ $ env/bin/pip install flask
 $ env/bin/pip install flask-sqlalchemy
 $ env/bin/pip install flask-wtf
 
-$ env/bin/pip install Crypto
 $ env/bin/pip install jwt
+$ env/bin/pip install cryptography
 ```
 ##Running the App in the Virtual Environment
 ```
