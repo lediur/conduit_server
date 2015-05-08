@@ -96,7 +96,7 @@ def create_user():
 
   if (len(exists) > 0):
     # If user exists, do not create user
-    return 'Specified %s exists\n' % ', '.join(exists), 400
+    return 'Provided %s exists\n' % ', '.join(exists), 400
 
   user = User(email_address, first_name, last_name, password, phone_number, push_enabled)
   if (not user):
@@ -520,7 +520,6 @@ def get_car(session_token, car_id):
 
   return jsonify(response)
 
-# User routes for Development
 @app.route('/users/<user_id>', methods=['GET'])
 def get_users_by_user_id(user_id):
   '''

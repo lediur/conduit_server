@@ -6,6 +6,10 @@ from app.models import Car, Session, User
 
 from app.utils import car_param_keys, user_param_keys, validate
 
+@app.route('/', methods=['GET'])
+def main():
+  return "No entries here so far", 200
+
 # Car routes for Production
 @app.route('/cars/<license_plate>/users', methods=['GET'])
 def get_subscribers(license_plate):

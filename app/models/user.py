@@ -4,6 +4,8 @@ from app.database import Base
 
 from app.utils import true_strings, false_strings
 
+from alembic import op
+
 class User(Base):
   __tablename__ = 'users'
   id = Column(Integer, primary_key=True)
@@ -15,8 +17,6 @@ class User(Base):
   push_enabled = Column(Boolean(), unique=False)
 
   # Relationships
-  # cars = relationship('Car', secondary=users_cars, backref='users')
-  # cars = relationship('cars', secondary=UsersJoinCars, backref='User')
   cars = relationship('UsersJoinCars')
   sessions = relationship("Session", order_by="Session.id", backref="user")
   conversations = relationship('Conversation', order_by="Conversation.id", backref='user')
