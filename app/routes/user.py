@@ -30,14 +30,14 @@ def get_user(session_token):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   # Retrieves user
   for param_key in user_param_keys:
@@ -75,12 +75,12 @@ def create_user():
     if (param_key not in request.json):
       omitted.append(param_key)
   if (len(omitted) > 0):
-    return 'Must provide %s\n' % ', '.join(omitted), 400
+    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(omitted), 'code': 400})
   for param_key in user_param_keys:
     if (not validate(param_key, request.json[param_key])):
       invalid.append(param_key)
   if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
+    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
 
   email_address = request.json['email_address']
   first_name = request.json['first_name']
@@ -96,11 +96,11 @@ def create_user():
 
   if (len(exists) > 0):
     # If user exists, do not create user
-    return 'Provided %s exists\n' % ', '.join(exists), 400
-
+    return jsonify(error={'message': 'Provided %s exists\n' % ', '.join(exists), 'code': 400})
+    
   user = User(email_address, first_name, last_name, password, phone_number, push_enabled)
   if (not user):
-    return 'Failed to create user\n', 400
+    return jsonify(error={'message': 'Failed to create user\n' % ', '.join(invalid), 'code': 400})
   db.add(user)
   db.commit()
 
@@ -135,26 +135,26 @@ def update_user(session_token):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   # Validates updated user information
   for param_key in user_param_keys:
     if (param_key in request.json):
       present.append(param_key)
   if (len(present) == 0):
-    return 'Must provide at least one parameter\n', 400
+    return jsonify(error={'message': 'Must provide at least one parameter\n', 'code': 400})
   for param_key in present:
     if (not validate(param_key, request.json[param_key])):
       invalid.append(param_key)
   if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
+    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
 
   # Updates user
   for param_key in present:
@@ -188,14 +188,14 @@ def delete_user(session_token):
   '''
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   User.query.filter_by(id=user_id).delete()
   return '', 200
@@ -219,14 +219,14 @@ def get_cars(session_token):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   for association in user.cars:
     if (association.users_id == user_id):
@@ -264,28 +264,28 @@ def create_car(session_token):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   # Validates car information
   if (not request.json):
-    return 'Must provide %s\n' % ', '.join(car_param_keys), 400
+    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(car_param_keys), 'code': 400})
   for param_key in car_param_keys:
     if (param_key not in request.json):
       omitted.append(param_key)
   if (len(omitted) > 0):
-    return 'Must provide %s\n' % ', '.join(omitted), 400
+    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(omitted), 'code': 400})
   for param_key in car_param_keys:
     if (not validate(param_key, request.json[param_key])):
       invalid.append(param_key)
   if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
+    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
 
   license_plate = request.json['license_plate']
   manufacturer = request.json['manufacturer']
@@ -295,7 +295,7 @@ def create_car(session_token):
     # If car DNE, creates car
     car = Car(license_plate, manufacturer, user_id)
     if (not car):
-      return 'Failed to create car\n', 400
+      return jsonify(error={'message': 'Failed to create car\n', 'code': 400})
   # Appends car to list of cars owned by user
   user_join_car = UsersJoinCars()
   user_join_car.car = car
@@ -333,42 +333,42 @@ def update_car(sesion_token, car_id):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   cars = user.cars
 
   # Validates car_id
   try:
     car_id = int(car_id)
-  except:
-    return 'Invalid car_id %s' % car_id, 400
+  except ValueError:
+    return jsonify(error={'message': 'Invalid car_id %s' % car_id, 'code': 400})
 
   # Validates user owns car
   if (car_id not in [car.id for car in cars]):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   # Validates car
   car = Car.query.get(car_id)
   if (not car):
-    return 'Cannot find car_id %d\n' % car_id, 400
+    return jsonify(error={'message': 'Cannot find car_id %d\n' % car_id, 'code': 400})
 
   # Validates updated car information
   for param_key in car_param_keys:
     if (param_key in request.json):
       present.append(param_key)
   if (len(present) == 0):
-    return 'Must provide at least one parameter\n', 400
+    return jsonify(error={'message': 'Must provide at least one parameter\n', 'code': 400})
   for param_key in present:
     if (not validate(param_key, request.json[param_key])):
       invalid.append(param_key)
   if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
+    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
 
   # Updates car
   for param_key in present:
@@ -409,8 +409,8 @@ def delete_car(session_token, car_id):
   # Validates car_id
   try:
     car_id = int(car_id)
-  except:
-    return 'Invalid car_id %s' % car_id, 400
+  except ValueError:
+    return jsonify(error={'message': 'Invalid car_id %s' % car_id, 'code': 400})
 
   # Validates user owns car
   if (car_id not in [car.id for car in cars]):
@@ -488,30 +488,30 @@ def get_car(session_token, car_id):
 
   # Validates session
   if (not session_token):
-    return 'Must provide session_token', 400
+    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
   session = Session.query.filter_by(session_token=session_token).first()
   if (not session):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   user_id = session.user_id
   user = User.query.get(user_id)
   if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
   cars = user.cars
 
   # Validates car_id
   try:
     car_id = int(car_id)
   except ValueError:
-    return 'Invalid car_id %s' % car_id, 400
+    return jsonify(error={'message': 'Invalid car_id %s' % car_id, 'code': 400})
 
   # Validates user owns car
   if (car_id not in [car.id for car in cars]):
-    return 'Invalid session_token %s' % session_token, 400
+    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
 
   # Validates car
   car = Car.query.get(car_id)
   if (not car):
-    return 'Cannot find car_id %d\n' % car_id, 400
+    return jsonify(error={'message': 'Cannot find car_id %d\n' % car_id, 'code': 400})
 
   # Retrieve car
   for param_key in car_param_keys:
@@ -531,7 +531,7 @@ def get_users_by_user_id(user_id):
   user_id = int(user_id)
   user = User.query.get(user_id)
   if (not user):
-    return 'Cannot find user_id %d\n' % user_id, 400
+    return jsonify(error={'message': 'Cannot find user_id %d\n' % user_id, 'code': 400})
 
   for param_key in user_param_keys:
     response[param_key] = user.get(param_key)
