@@ -399,7 +399,7 @@ def delete_car(session_token, car_id):
   user = User.query.get(user_id)
   if (not user):
     return 'Invalid session_token %s' % session_token, 400
-  cars = user.cars
+  associations = user.cars
 
   # Validates car_id
   try:
@@ -408,7 +408,7 @@ def delete_car(session_token, car_id):
     return 'Invalid car_id %s' % car_id, 400
 
   # Validates user owns car
-  if (car_id not in [car.id for car in cars]):
+  if (car_id not in [association.cars_id for association in associations]):
     return 'Invalid session_token %s' % session_token, 400
 
   # Validates car
@@ -417,9 +417,11 @@ def delete_car(session_token, car_id):
     return 'Cannot find car_id %d\n' % car_id, 400
 
   # Deletes car
+  # We should instead delete the association not the Car itself!
   Car.query.filter_by(id=car_id).delete()
-
-  return 'Delete successful', 200
+  response = {}
+  response["car_id"] = car_id
+  return jsonify(response)
 
 #==============================================================================
 #
