@@ -211,13 +211,24 @@ def try_retrieve_user(user_login_params):
 def try_retrieve_cars_of_user(user):
   cars = []
   for association in user.cars:
-    if (association.users_id == user_id):
+    if (association.users_id == user.id):
       try:
         car_id = association.cars_id
         cars.append(Car.query.get(car_id))
       except:
         return None, {'message': 'Failed to retrieve cars of user', 'code': 400}
   return cars, None
+
+def try_retrieve_users_of_car(car):
+  users = []
+  for association in car.users:
+    if (association.cars_id == car.id):
+      try:
+        user_id = association.users_id
+        users.append(User.query.get(user_id))
+      except:
+        return None, {'message': 'Failed to retrieve users of car', 'code': 400}
+  return users, None
 
 def try_encrypt_password(user_params):
   if ('password' in user_params):
@@ -250,10 +261,18 @@ def try_create_car_of_user(user, car_params):
   else:
     return car, None
 
-def try_retrieve_car(car_id):
+def try_retrieve_car_by_id(car_id):
   car = Car.query.get(car_id)
   if (not car):
-    return None, {'message': 'Cannot find car_id %d\n' % car_id, 'code': 400}
+    return None, {'message': 'Invalid car_id %d' % car_id, 'code': 400}
+  return car, None
+
+def try_retrieve_car_by_license_plate(license_plate):
+  if (not license_plate):
+    return None, {'message': 'Missing license_plate', 'code': 400}
+  car = Car.query.filter_by(license_plate=license_plate).first()
+  if (not car):
+    return None, {'message': 'Invalid license_plate %s' % license_plate, 'code': 400}
   return car, None
 
 def try_delete_car(car):

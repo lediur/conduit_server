@@ -4,6 +4,7 @@ from app.database import db
 
 from app.models import Car, Session, User
 
+from app import utils
 from app.utils import car_param_keys, user_param_keys, validate
 
 @app.route('/', methods=['GET'])
@@ -13,38 +14,21 @@ def main():
 # Car routes for Production
 @app.route('/cars/<license_plate>/users', methods=['GET'])
 def get_subscribers(license_plate):
-  response = []
-  users = []
-
-  # Validates session
   session_token = request.args['session_token']
-  if (not session_token):
-    return 'Must provide session_token', 400
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return 'Invalid session_token %s' % session_token, 400
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates license plate
-  if (not license_plate):
-    return 'Must provide license_plate', 400
-  car = Car.query.filter_by(license_plate=license_plate).first()
-  if (not car):
-    return 'Invalid license_plate %s' % license_plate, 400
-  car_id = car.id
+  car, error = utils.try_retrieve_car_by_license_plate(license_plate)
+  if (error):
+    return jsonify(error=error), 400  
 
-  for association in car.users:
-    if (association.cars_id == car_id):
-      user_id = association.users_id
-      users.append(User.query.get(user_id))
+  users, error = try_retrieve_users_of_car(car)
+  if (error):
+    return jsonify(error=error), 400
 
+  response = []
   for user in users:
-    user_props = {}
-    for param_key in user_param_keys:
-      user_props[param_key] = user.get(param_key)
-    response.append(user_props)
+    response.append(utils.create_response(user, user_param_keys))
 
   return jsonify(users=response)

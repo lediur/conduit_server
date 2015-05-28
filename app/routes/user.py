@@ -6,6 +6,7 @@ from app.models import Car, Session, User, UsersJoinCars
 
 from app import utils
 from app.utils import car_param_keys, user_param_keys, validate
+
 import Crypto
 import jwt
 from Crypto.PublicKey import RSA
@@ -27,7 +28,6 @@ def get_user(session_token):
       @session_token
     If validation fails -- description of failure
   '''
-  # Validates session
   user, error = utils.validate_session(session_token)
   if (error):
     return jsonify(error=error)
@@ -222,7 +222,7 @@ def update_car(sesion_token, car_id):
   if (error):
     return jsonify(error=error), 400
 
-  car, error = utils.try_retrieve_car(car_id)
+  car, error = utils.try_retrieve_car_by_id(car_id)
   if (error):
     return jsonify(error=error), 400
 
@@ -271,7 +271,7 @@ def delete_car(session_token, car_id):
   if (error):
     return jsonify(error=error), 400
 
-  car, error = utils.try_retrieve_car(car_id)
+  car, error = utils.try_retrieve_car_by_id(car_id)
   if (error):
     return jsonify(error=error), 400
 
