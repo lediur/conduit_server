@@ -14,9 +14,9 @@ def init_db():
   # Import relevant modules
   import app.models
   
-  # # Drop all tables
-  # print 'Drop all tables'
-  # Base.metadata.drop_all(bind=engine)
+  # Drop all tables
+  print 'Drop all tables'
+  Base.metadata.drop_all(bind=engine)
 
   # Create all tables
   print 'Create all tables'

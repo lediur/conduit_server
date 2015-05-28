@@ -326,8 +326,6 @@ def get_car(session_token, car_id):
     If validation succeeds -- car associated with @car_id
     If validation fails -- description of failure
   '''
-  response = {}
-
   user, error = utils.validate_session(session_token)
   if (error):
     return jsonify(error=error), 400
