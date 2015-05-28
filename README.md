@@ -17,7 +17,14 @@ $ env/bin/python run.py
 ```
 ##Sending Requests with cURL
 ```
-$ curl -H "Content-Type: application/json" -d '@user.json' 'localhost:8080/users'
-$ curl -H "Content-Type: application/json" -d '@login.json' 'localhost:8080/sessions'
-$ curl -H "Content-Type: application/json" -d '@car.json' 'localhost:8080/users/imma_session_token/cars'
+$ curl -H "Content-Type: application/json" -X POST -d '@create_user.json' 'localhost:1337/users'
+$ curl -H "Content-Type: application/json" -X POST -d '@login.json' 'localhost:1337/sessions'
+$ curl -H "Content-Type: application/json" -X PUT -d '@update_user.json' 'localhost:1337/users/[session_token]'
+$ curl -X DELETE 'localhost:1337/users/[session_token]'
+$ curl -H "Content-Type: application/json" -d '@car.json' 'localhost:1337/users/[session_token]/cars'
 ```
+##View the Database
+```
+$ env/bin/python
+>>> from app.models import User
+>>> User.query.all() 

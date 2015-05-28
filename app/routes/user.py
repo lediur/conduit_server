@@ -4,6 +4,7 @@ from app.database import db
 
 from app.models import Car, Session, User, UsersJoinCars
 
+from app import utils
 from app.utils import car_param_keys, user_param_keys, validate
 import Crypto
 import jwt
@@ -26,24 +27,12 @@ def get_user(session_token):
       @session_token
     If validation fails -- description of failure
   '''
-  response = {}
-
   # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error)
 
-  # Retrieves user
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
+  response = utils.create_response(user, user_param_keys)
   return jsonify(response)
 
 @app.route('/users', methods=['POST'])
@@ -51,62 +40,32 @@ def create_user():
   '''
   Route for POST /users
   Accepts:
-    @email_address -- email address passed in the body of the request
-    @first_name -- first name passed in the body of the request
-    @last_name -- last name passed in the body of the request
-    @password -- passwords passed in the body of the request
-    @phone_number -- phone number passed in the body of the request
-    @push_enabled -- push enabled passed in the body of the request
+    @email_address, @first_name, @last_name, @password, @phone_number,
+      @push_enabled -- required params passed in the body of the request
   Description:
-    Creates a new user with email address @email_address, first name
-    @first_name, last name @last_name, password @password, phone number
-    @phone_number, and push enabled @push_enabled.
+    Creates a new user with @email_address, @first_name, @last_name, 
+      @password, @phone_number, and @push_enabled
   Returns:
     If validation succeeds -- created user
     If validation fails -- description of failure
   '''
-  omitted = []
-  invalid = []
-  exists = []
-  response = {}
+  user_params, error = utils.validate_param_keys_exist(request, user_param_keys, len(user_param_keys))
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates user information
-  for param_key in user_param_keys:
-    if (param_key not in request.json):
-      omitted.append(param_key)
-  if (len(omitted) > 0):
-    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(omitted), 'code': 400})
-  for param_key in user_param_keys:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-  if (len(invalid) > 0):
-    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
+  error = utils.validate_user_params(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  email_address = request.json['email_address']
-  first_name = request.json['first_name']
-  last_name  = request.json['last_name']
-  password = sha256_crypt.encrypt(request.json['password'])
-  phone_number = request.json['phone_number']
-  push_enabled = request.json['push_enabled']
+  user_params, error = utils.try_encrypt_password(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  if (User.query.filter_by(email_address=email_address).first()):
-    exists.append('email_address')
-  if (User.query.filter_by(phone_number=phone_number).first()):
-    exists.append('phone_number')
+  user, error = utils.try_create_user(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  if (len(exists) > 0):
-    # If user exists, do not create user
-    return jsonify(error={'message': 'Provided %s exists\n' % ', '.join(exists), 'code': 400})
-    
-  user = User(email_address, first_name, last_name, password, phone_number, push_enabled)
-  if (not user):
-    return jsonify(error={'message': 'Failed to create user\n' % ', '.join(invalid), 'code': 400})
-  db.add(user)
-  db.commit()
-
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-
+  response = utils.create_response(user, user_param_keys)
   return jsonify(response)
 
 @app.route('/users/<session_token>', methods=['PUT'])
@@ -115,12 +74,9 @@ def update_user(session_token):
   Route for PUT /users/<session_token>
   Accepts:
     @session_token -- valid identifier passed in the route of the request
-    @email_address -- optional email address passed in the body of the request
-    @first_name -- optional first name passed in the body of the request
-    @last_name -- optional last name passed in the body of the request
-    @password -- optional passwords passed in the body of the request
-    @phone_number -- optional phone number passed in the body of the request
-    @push_enabled -- optional push enabled passed in the body of the request
+    @email_address, @first_name, @last_name, @password, @phone_number,
+      @push_enabled -- optional params passed in the body of the request,
+      must specify at least one
   Description:
     Updates an existing user with email address @email_address, first name
     @first_name, last name @last_name, password @password, phone number
@@ -129,49 +85,27 @@ def update_user(session_token):
     If validation succeeds -- updates user
     If validation fails -- description of failure
   '''
-  present = []
-  invalid = []
-  response = {}
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  user_params, error = utils.validate_param_keys_exist(request, user_param_keys, 1)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates updated user information
-  for param_key in user_param_keys:
-    if (param_key in request.json):
-      present.append(param_key)
-  if (len(present) == 0):
-    return jsonify(error={'message': 'Must provide at least one parameter\n', 'code': 400})
-  for param_key in present:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-  if (len(invalid) > 0):
-    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
+  error = utils.validate_user_params(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Updates user
-  for param_key in present:
-    if (param_key == "password"):
-      password = sha256_crypt.encrypt(request.json[param_key])
-      user.set(param_key, password)
-    else:  
-      user.set(param_key, request.json[param_key])
+  user_params, error = utils.try_encrypt_password(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  #db.add(user)
-  db.commit()
+  user, error = utils.try_update_user(user, user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Retrieves user
-  for param_key in user_param_keys:
-    response[param_key] = user.get(param_key)
-  response['id'] = user.id
-
+  response = utils.create_response(user, user_param_keys)
   return jsonify(response)
 
 @app.route('/users/<session_token>', methods=['DELETE'])
@@ -186,19 +120,15 @@ def delete_user(session_token):
     If validation succeeds -- description of success
     If validation fails -- description of failure
   '''
-  # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
 
-  User.query.filter_by(id=user_id).delete()
-  return '', 200
+  error = utils.try_delete_user(user)
+  if (error):
+    return jsonify(error=error), 400
+  
+  return '', 200s
 
 #==============================================================================
 # Get, Update, Create, Delete cars associated with user

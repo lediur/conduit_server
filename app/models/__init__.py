@@ -8,8 +8,6 @@ from app.database import Base
 #   cars_id = Column(Integer, ForeignKey('cars.id'), primary_key=True)
 
 from car import Car
-from conversation import Conversation
-from message import Message
 from session import Session
 from user import User
 

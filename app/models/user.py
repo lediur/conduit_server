@@ -1,8 +1,6 @@
 from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from app.database import Base
-
-from app.utils import true_strings, false_strings
 
 from alembic import op
 
@@ -19,17 +17,23 @@ class User(Base):
   # Relationships
   cars = relationship('UsersJoinCars')
   sessions = relationship("Session", order_by="Session.id", backref="user")
-  conversations = relationship('Conversation', order_by="Conversation.id", backref='user')
 
   def __init__(self, email_address=None, first_name=None, last_name=None,
                password=None, phone_number=None, push_enabled=None):
-    self.email_address = email_address
-    self.first_name = first_name
-    self.last_name = last_name
-    self.password = password
-    self.phone_number = phone_number
-    self.push_enabled = push_enabled in true_strings
+    if (email_address):
+      self.email_address = email_address
+    if (first_name):
+      self.first_name = first_name
+    if (last_name):
+      self.last_name = last_name
+    if (password):
+      self.password = password
+    if (phone_number):
+      self.phone_number = phone_number
+    if (push_enabled):
+      self.push_enabled = push_enabled in ['True', 'T', '1']
 
+  # Model Validation
   def get(self, prop):
     if (prop == 'email_address'):
       return self.email_address
@@ -59,7 +63,7 @@ class User(Base):
     if (prop == 'phone_number'):
       self.phone_number = value
     if (prop == 'push_enabled'):
-      self.push_enabled = value in true_strings
+      self.push_enabled = value in ['True', 'T', '1']
 
   def __repr__(self):
     s = ', '.join(['id="%d"' % self.id,

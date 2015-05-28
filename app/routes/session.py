@@ -4,12 +4,8 @@ from app.database import db
 
 from app.models import Session, User
 
-from app.utils import user_param_keys, session_param_keys, user_param_login_keys, validate
-
-import datetime
-import uuid
-
-from passlib.hash import sha256_crypt
+from app import utils
+from app.utils import user_param_keys, session_param_keys, user_login_param_keys, validate
 
 # Session routes for Production
 @app.route('/sessions', methods=['POST'])
@@ -19,69 +15,22 @@ def create_session():
   returns the random UUID session token. Otherwise, returns 400 Bad Request
   Error.
   '''
+  user_login_params, error = utils.validate_param_keys_exist(request, user_login_param_keys, len(user_login_param_keys))
+  if (error):
+    return jsonify(error=error), 400
 
-  omitted = []
-  invalid = []
-  response = {}
+  error = utils.validate_user_params(user_login_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validation
-  for param_key in user_param_login_keys:
-    if (param_key not in request.json):
-      omitted.append(param_key)
-  if (len(omitted) > 0):
-    return 'Must provide %s\n' % ', '.join(omitted), 400
-  for param_key in user_param_login_keys:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-  if (len(invalid) > 0):
-    return 'Invalid %s\n' % ', '.join(invalid), 400
+  user, error = utils.try_retrieve_user(user_login_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Retrive user
-  email_address = request.json['email_address']
-  password = request.json['password']
+  session, error = utils.try_create_session(user)
+  if (error):
+    return jsonify(error=error), 400
 
-  user = User.query.filter_by(email_address=email_address)\
-                   .first()
+  response = utils.create_response(user, user_param_keys)
 
-  if (not user):
-    return 'Invalid login credentials', 400
-
-  if (not sha256_crypt.verify(password, user.password)):
-    return 'Invalid login credentials', 400
-
-
-  # Create session
-  session_token = str(uuid.uuid4())
-  # session_token = "imma_session_token"
-  timestamp = datetime.datetime.utcnow()
-  user_id = user.id
-
-  session = Session(session_token, timestamp, user_id)
-  
-  if (not session):
-    return 'Failed to create session\n', 400
-  db.add(session)
-  db.commit()
-
-  user_props = {}
-  for param_key in user_param_keys:
-    user_props[param_key] = user.get(param_key)
-  user_props['id'] = user.id
-
-  return jsonify(session_token=session.get('session_token'), user=user_props)
-
-# Session routes for Development
-@app.route('/sessions', methods=['GET'])
-def get_sessions():
-  response = []
-  sessions = []
-
-  sessions = Session.query.all()
-
-  for session in sessions:
-    session_props = {}
-    for param_key in session_param_keys:
-      session_props[param_key] = session.get(param_key)
-    session_props['id'] = session.id
-    response.append(session_props)
-  return jsonify(sessions=response)
+  return jsonify(session_token=session.get('session_token'), user=response)
