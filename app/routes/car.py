@@ -1,15 +1,15 @@
 from flask import jsonify, request
 from app import app
-from app.database import db
 
+from app.database import db
 from app.models import Car, Session, User
 
 from app import utils
-from app.utils import car_param_keys, user_param_keys, validate
+from app.utils import car_param_keys, user_param_keys
 
 @app.route('/', methods=['GET'])
 def main():
-  return "No entries here so far", 200
+  return "Welcome to Conduit API!", 200
 
 # Car routes for Production
 @app.route('/cars/<license_plate>/users', methods=['GET'])

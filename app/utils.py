@@ -6,17 +6,13 @@ import datetime # try_create_session
 import uuid # try_create_session
 
 car_param_keys = ['license_plate', 'manufacturer']
-conversation_param_keys = ['charger_unlocked', 'timestamp', 'receiver_car_id', 'requester_user_id']
-message_param_keys = ['sender_id', 'text', 'timestamp', 'conversation_id']
 session_param_keys = ['session_token', 'timestamp', 'user_id']
 user_param_keys = ['email_address', 'first_name', 'last_name', 'password', 'phone_number', 'push_enabled']
-
 user_login_param_keys = ['email_address', 'password']
 
 #==============================================================================
 # General utilities
 #==============================================================================
-
 def create_response(obj, param_keys):
   response = {}
   for param_key in param_keys:
@@ -34,25 +30,20 @@ def try_cast_to_int(key, value):
 #==============================================================================
 # Validation utilities
 #==============================================================================
-
 def validate(type, text):
   return True
 
 def validate_param_keys_exist(request, param_keys, threshold):
   '''
-  Accepts:
-    @request -- HTTP request object
-    @param_keys -- List of parameters to validate in the HTTP request object
-    @threshold -- Threshold number of valid parameters to return success
   Description:
-    Helper function to validate that @request contains at least @threshold
-    parameters contained in @param_keys.
+    Validates that @request contains at least @threshold parameters
+      contained in @param_keys
   Returns:
-    If validation succeeds -- tuple (@params, None), such that @params 
-      represents a dictionary from the subset of @param_keys contained
-      in @request to their values
-    If validation fails -- tuple (None, @error), such that @error contains
-      a description of the failure and an HTTP error code to send
+    If validation succeeds -- tuple (@params, None)
+      @params -- dictionary from the subset of @param_keys contained
+                 in @request to their values
+    If validation fails -- tuple (None, @error)
+      @error -- description of the failure and HTTP error code
   '''
   param_keys_exist = []
   param_keys_absent = []
@@ -78,34 +69,40 @@ def validate_param_keys_exist(request, param_keys, threshold):
 
   return params, None
 
-def validate_user_params(params):
+def validate_user_params(user_params):
   '''
   Description:
-    Helper function to validate that @params contains valid parameters
-    contained in @param_keys.
+    Validates that @user_params contains valid user parameters, as dictated
+      by the User model
+  Returns:
+    If validation succeeds -- None
+    If validation fails -- description of the failure and HTTP error code
   '''
   invalid = []
-  for param_key in params:
+  for param_key in user_params:
     try:
       user = User()
-      user.set(param_key, params[param_key])
+      user.set(param_key, user_params[param_key])
     except:
       invalid.append(param_key)
   if (len(invalid) > 0):
     return {'message': 'Invalid %s' % ', '.join(invalid), 'code': 400}
   return None
 
-def validate_car_params(params):
+def validate_car_params(car_params):
   '''
   Description:
-    Helper function to validate that @params contains valid parameters
-    contained in @param_keys.
+    Validates that @car_params contains valid car parameters, as dictated
+      by the Car model
+  Returns:
+    If vaildation succeeds -- None
+    If validation fails -- description of the failure and HTTP error code
   '''
   invalid = []
-  for param_key in params:
+  for param_key in car_params:
     try:
       car = Car()
-      car.set(param_key, params[param_key])
+      car.set(param_key, car_params[param_key])
     except:
       invalid.append(param_key)
   if (len(invalid) > 0):
@@ -115,12 +112,12 @@ def validate_car_params(params):
 def validate_session(session_token):
   '''
   Description:
-    Helper function to validate the session identified by @session_token.
+    Validates @session_token
   Returns:
-    If validation succeeds -- tuple (user, None), such that @user specifies
-      the user associated with the session
-    If validation fails -- tuple (None, error), such that @error contains
-      a description of the failure and an HTTP error code to send
+    If validation succeeds -- tuple (@user, None)
+      @user -- user associated with the session
+    If validation fails -- tuple (None, @error)
+      @error -- description of the failure and HTTP error code
   '''
   if (not session_token):
     return None, {'message': 'Must provide session_token', 'code': 400}
@@ -133,15 +130,30 @@ def validate_session(session_token):
   return user, None
 
 def validate_user_owns_car(cars, car_id):
+  '''
+  Description:
+    Validates @cars contains a car with @car_id
+  Returns:
+    If validation succeeds -- None
+    If validation fails -- description of the failure and HTTP error code
+  '''
   if (car_id not in [car.id for car in cars]):
-    return return {'message': 'Invalid session_token %s' % session_token, 'code': 400}
+    return {'message': 'Invalid session_token %s' % session_token, 'code': 400}
   return None
 
 #==============================================================================
 # Session utilities
 #==============================================================================
-
 def try_create_session(user):
+  '''
+  Description:
+    Tries to create a session for @user
+  Returns:
+    If create succeeds -- tuple (@session, None)
+      @session -- created session
+    If create fails -- tuple (None, @error)
+      @error -- description of the failure and HTTP error code
+  '''
   session_token = str(uuid.uuid4())
   timestamp = datetime.datetime.utcnow()
   user_id = user.id
@@ -159,8 +171,16 @@ def try_create_session(user):
 #==============================================================================
 # User utilities
 #==============================================================================
-
 def try_create_user(user_params):
+  '''
+  Description:
+    Tries to create a user with @user_params
+  Returns:
+    If create succeeds -- tuple (@user, None)
+      @user -- created user
+    If create fails -- tuple (None, @error)
+      @error -- description of the failure and HTTP error code
+  '''
   email_address = user_params['email_address']
   first_name = user_params['first_name']
   last_name = user_params['last_name']
@@ -179,6 +199,15 @@ def try_create_user(user_params):
     return user, None
 
 def try_update_user(user, user_params):
+  '''
+  Description:
+    Tries to update @user with @user_params
+  Returns:
+    If update succeeds -- tuple (@user, None)
+      @user -- updated user
+    If update fails -- tuple (None, @error)
+      @error -- description of the failure and HTTP error code
+  '''
   for param_key in user_params:
     try:
       user.set(param_key, user_params[param_key])
@@ -190,6 +219,13 @@ def try_update_user(user, user_params):
   return user, None
 
 def try_delete_user(user):
+  '''
+  Description:
+    Tries to delete @user
+  Returns:
+    If delete succeeds -- None
+    If delete fails -- description of the failure and HTTP error code
+  '''
   try:
     User.query.filter_by(id=user.id).delete()
     db.commit()
@@ -238,7 +274,6 @@ def try_encrypt_password(user_params):
 #==============================================================================
 # Car utilities
 #==============================================================================
-
 def try_create_car_of_user(user, car_params):
   license_plate = car_params['license_plate']
   manufacturer = car_params['manufacturer']
