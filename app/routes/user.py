@@ -41,7 +41,7 @@ def create_user():
   Route for POST /users
   Accepts:
     @email_address, @first_name, @last_name, @password, @phone_number,
-      @push_enabled -- required params passed in the body of the request
+      @push_enabled -- required parameters passed in the body of the request
   Description:
     Creates a new user with @email_address, @first_name, @last_name, 
       @password, @phone_number, and @push_enabled
@@ -128,7 +128,7 @@ def delete_user(session_token):
   if (error):
     return jsonify(error=error), 400
   
-  return '', 200s
+  return '', 200
 
 #==============================================================================
 # Get, Update, Create, Delete cars associated with user
@@ -144,32 +144,17 @@ def get_cars(session_token):
       the session identifier @session_token.
     If validation fails -- description of failure
   '''
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
+
+  cars, error = utils.try_retrieve_cars_of_user(user)
+  if (error):
+    return jsonify(error=error), 400
+
   response = []
-  cars = []
-
-  # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-
-  for association in user.cars:
-    if (association.users_id == user_id):
-      car_id = association.cars_id
-      cars.append(Car.query.get(car_id))
-
-  # Retrives cars
   for car in cars:
-    car_props = {}
-    for param_key in car_param_keys:
-      car_props[param_key] = car.get(param_key)
-    car_props['id'] = car.id
-    response.append(car_props)
+    response.append(utils.create_response(car, car_param_keys))
   return jsonify(cars=response)
 
 @app.route('/users/<session_token>/cars', methods=['POST'])
@@ -178,8 +163,8 @@ def create_car(session_token):
   Route for POST /users/<session_token>/cars
   Accepts:
     @session_token -- valid identifier passed in the route of the request
-    @license_plate -- license plate passed in the body of the request
-    @manufacturer -- manufacturer passed in the body of the request
+    @license_plate, @manufacturer -- required parameters passed in the body
+      of the request
   Description:
     Creates a new car with license plate @license_plate and manufacturer
     @manufacturer. Appends the new car to the list of cars owned by the
@@ -188,57 +173,28 @@ def create_car(session_token):
     If validation succeeds -- created car
     If validation fails -- description of failure
   '''
-  omitted = []
-  invalid = []
-  response = {}
 
-  # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates car information
-  if (not request.json):
-    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(car_param_keys), 'code': 400})
-  for param_key in car_param_keys:
-    if (param_key not in request.json):
-      omitted.append(param_key)
-  if (len(omitted) > 0):
-    return jsonify(error={'message': 'Must provide %s\n' % ', '.join(omitted), 'code': 400})
-  for param_key in car_param_keys:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-  if (len(invalid) > 0):
-    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
+  car_params, error = utils.validate_param_keys_exist(request, car_param_keys, len(car_param_keys))
+  if (error):
+    return jsonify(error=error), 400
 
-  license_plate = request.json['license_plate']
-  manufacturer = request.json['manufacturer']
+  error = utils.validate_car_params(car_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  car = Car.query.filter_by(license_plate=license_plate).first()
-  if (not car):
-    # If car DNE, creates car
-    car = Car(license_plate, manufacturer, user_id)
-    if (not car):
-      return jsonify(error={'message': 'Failed to create car\n', 'code': 400})
-  # Appends car to list of cars owned by user
-  user_join_car = UsersJoinCars()
-  user_join_car.car = car
-  user.cars.append(user_join_car)
+  user, error = utils.try_create_user(user_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  db.add(car)
-  db.commit()
+  car, error = utils.try_create_car_of_user(user, car_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Retrieves car
-  for param_key in car_param_keys:
-    response[param_key] = car.get(param_key)
-  response['id'] = car.id
-
+  response = utils.create_response(car, car_param_keys)
   return jsonify(response)
 
 @app.route('/users/<session_token>/cars/<car_id>', methods=['PUT'])
@@ -257,58 +213,36 @@ def update_car(sesion_token, car_id):
     If validation succeeds -- updates car
     If validation fails -- description of failure
   '''
-  present = []
-  invalid = []
-  response = {}
-
-  # Validates session
-  if (not session_token):
-    return jsonify(error={'message': 'Must provide session_token', 'code': 400})
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
   cars = user.cars
 
-  # Validates car_id
-  try:
-    car_id = int(car_id)
-  except ValueError:
-    return jsonify(error={'message': 'Invalid car_id %s' % car_id, 'code': 400})
+  car_id, error = utils.try_cast_to_int('car_id', car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates user owns car
-  if (car_id not in [car.id for car in cars]):
-    return jsonify(error={'message': 'Invalid session_token %s' % session_token, 'code': 400})
+  car, error = utils.try_retrieve_car(car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates car
-  car = Car.query.get(car_id)
-  if (not car):
-    return jsonify(error={'message': 'Cannot find car_id %d\n' % car_id, 'code': 400})
+  error = utils.validate_user_owns_car(cars, car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates updated car information
-  for param_key in car_param_keys:
-    if (param_key in request.json):
-      present.append(param_key)
-  if (len(present) == 0):
-    return jsonify(error={'message': 'Must provide at least one parameter\n', 'code': 400})
-  for param_key in present:
-    if (not validate(param_key, request.json[param_key])):
-      invalid.append(param_key)
-  if (len(invalid) > 0):
-    return jsonify(error={'message': 'Invalid %s\n' % ', '.join(invalid), 'code': 400})
+  car_params, error = utils.validate_param_keys_exist(request, car_param_keys, 1)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Updates car
-  for param_key in present:
-    car.set(param_key, request.json[param_key])
+  error = utils.validate_car_params(car_params)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Retrieves car
-  for param_key in car_param_keys:
-    response[param_key] = car.get(param_key)
-  response['id'] = car.id
+  car, error = utils.try_update_car(car, car_params)
+  if (error):
+    return jsonify(error=error), 400
 
+  response = utils.create_response(car, car_param_keys)
   return jsonify(response)
 
 @app.route('/users/<session_token>/cars/<car_id>', methods=['DELETE'])
@@ -324,37 +258,34 @@ def delete_car(session_token, car_id):
     If validation succeeds -- description of success
     If validation fails -- description of failure
   '''
-  # Validates session
-  if (not session_token):
-    return 'Must provide session_token', 400
-  session = Session.query.filter_by(session_token=session_token).first()
-  if (not session):
-    return 'Invalid session_token %s' % session_token, 400
-  user_id = session.user_id
-  user = User.query.get(user_id)
-  if (not user):
-    return 'Invalid session_token %s' % session_token, 400
+  user, error = utils.validate_session(session_token)
+  if (error):
+    return jsonify(error=error), 400
   cars = user.cars
 
-  # Validates car_id
-  try:
-    car_id = int(car_id)
-  except ValueError:
-    return jsonify(error={'message': 'Invalid car_id %s' % car_id, 'code': 400})
+  car_id, error = utils.try_cast_to_int('car_id', car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates user owns car
-  if (car_id not in [car.id for car in cars]):
-    return 'Invalid session_token %s' % session_token, 400
+  error = utils.validate_user_owns_car(cars, car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Validates car
-  car = Car.query.get(car_id)
-  if (not car):
-    return 'Cannot find car_id %d\n' % car_id, 400
+  car, error = utils.try_retrieve_car(car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  # Deletes car
-  Car.query.filter_by(id=car_id).delete()
+  error = utils.validate_user_owns_car(cars, car_id)
+  if (error):
+    return jsonify(error=error), 400
 
-  return 'Delete successful', 200
+  error = utils.try_delete_car(car)
+  if (error):
+    return jsonify(error=error), 400
+
+  # TODO Delete associations with car
+  
+  return '', 200
 
 #==============================================================================
 #

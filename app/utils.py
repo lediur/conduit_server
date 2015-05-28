@@ -24,6 +24,13 @@ def create_response(obj, param_keys):
       response[param_key] = obj.get(param_key)
   return response
 
+def try_cast_to_int(key, value):
+  try:
+    i = int(value)
+  except ValueError:
+    return None, {'message': 'Invalid %s %s' % (key, value), 'code': 400}
+  return i, None
+
 #==============================================================================
 # Validation utilities
 #==============================================================================
@@ -88,6 +95,23 @@ def validate_user_params(params):
     return {'message': 'Invalid %s' % ', '.join(invalid), 'code': 400}
   return None
 
+def validate_car_params(params):
+  '''
+  Description:
+    Helper function to validate that @params contains valid parameters
+    contained in @param_keys.
+  '''
+  invalid = []
+  for param_key in params:
+    try:
+      car = Car()
+      car.set(param_key, params[param_key])
+    except:
+      invalid.append(param_key)
+  if (len(invalid) > 0):
+    return {'message': 'Invalid %s' % ', '.join(invalid), 'code': 400}
+  return None
+
 def validate_session(session_token):
   '''
   Description:
@@ -107,6 +131,11 @@ def validate_session(session_token):
   if (not user):
     return None, {'message': 'Invalid session_token %s' % session_token, 'code': 400}
   return user, None
+
+def validate_user_owns_car(cars, car_id):
+  if (car_id not in [car.id for car in cars]):
+    return return {'message': 'Invalid session_token %s' % session_token, 'code': 400}
+  return None
 
 #==============================================================================
 # Session utilities
@@ -179,7 +208,59 @@ def try_retrieve_user(user_login_params):
   else:
     return user, None
 
+def try_retrieve_cars_of_user(user):
+  cars = []
+  for association in user.cars:
+    if (association.users_id == user_id):
+      try:
+        car_id = association.cars_id
+        cars.append(Car.query.get(car_id))
+      except:
+        return None, {'message': 'Failed to retrieve cars of user', 'code': 400}
+  return cars, None
+
 def try_encrypt_password(user_params):
   if ('password' in user_params):
     user_params['password'] = sha256_crypt.encrypt(user_params['password'])
   return user_params, None
+
+#==============================================================================
+# Car utilities
+#==============================================================================
+
+def try_create_car_of_user(user, car_params):
+  license_plate = car_params['license_plate']
+  manufacturer = car_params['manufacturer']
+
+  car = Car.query.filter_by(license_plate=license_plate).first()
+  if (not car):
+    # If car DNE, creates car
+    car = Car(license_plate, manufacturer, user.id)
+
+  try:
+    # Appends car to list of cars owned by user
+    user_join_car = UsersJoinCars()
+    user_join_car.car = car
+    user.cars.append(user_join_car)
+
+    db.add(car)
+    db.commit()
+  except:
+    return None, {'message': 'Failed to create car', 'code': 400}
+  else:
+    return car, None
+
+def try_retrieve_car(car_id):
+  car = Car.query.get(car_id)
+  if (not car):
+    return None, {'message': 'Cannot find car_id %d\n' % car_id, 'code': 400}
+  return car, None
+
+def try_delete_car(car):
+  try:
+    Car.query.filter_by(id=car.id).delete()
+    db.commit()
+  except:
+    db.rollback()
+    return {'message': 'Failed to delete car', 'code': 400}
+  return None
