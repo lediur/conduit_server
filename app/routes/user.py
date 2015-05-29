@@ -7,6 +7,8 @@ from app.models import Car, Session, User
 from app import utils
 from app.utils import car_param_keys, user_param_keys
 
+import datetime
+
 #==============================================================================
 # Get, Create, Update, Delete users
 #==============================================================================
