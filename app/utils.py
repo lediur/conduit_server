@@ -1,9 +1,11 @@
 from app.database import db
-from app.models import Car, Session, User
+from app.models import Car, Session, User, UsersJoinCars
 
 from passlib.hash import sha256_crypt
 import datetime # try_create_session
 import uuid # try_create_session
+
+import re # reformat_params
 
 car_param_keys = ['license_plate', 'manufacturer']
 session_param_keys = ['session_token', 'timestamp', 'user_id']
@@ -26,6 +28,34 @@ def try_cast_to_int(key, value):
   except ValueError:
     return None, {'message': 'Invalid %s %s' % (key, value), 'code': 400}
   return i, None
+
+def reformat_params(params):
+  
+  def enum(**enums):
+    return type('Enum', (), enums)
+
+  Text = enum(LOWER=1, UPPER=2, CAPITALIZE=3, STRIP=4)
+
+  candidates = {
+    'license_plate': Text.UPPER,
+    'manufacturer': Text.CAPITALIZE,
+    'email_address': Text.LOWER,
+    'first_name': Text.CAPITALIZE,
+    'last_name': Text.CAPITALIZE,
+    'phone_number': Text.STRIP
+  }
+
+  for i in candidates:
+    if (i in params):
+      if (candidates[i] == Text.UPPER):
+        params[i] = params[i].upper()
+      elif (candidates[i] == Text.LOWER):
+        params[i] = params[i].lower()
+      elif (candidates[i] == Text.CAPITALIZE):
+        params[i] = params[i].capitalize()
+      elif (candidates[i] == Text.STRIP):
+        params[i] = re.sub('[^0-9]', '', params[i])
+  return params
 
 #==============================================================================
 # Validation utilities
@@ -50,24 +80,18 @@ def validate_param_keys_exist(request, param_keys, threshold):
   params = {}
 
   if (not request.json):
-    return None, {
-      'message': 'Missing %s' % ', '.join(param_keys_absent),
-      'code': 400
-    }
+    return None, {'message': 'Missing %s' % ', '.join(param_keys_absent), 'code': 400}
   for param_key in param_keys:
     if (param_key not in request.json):
       param_keys_absent.append(param_key)
     else:
       param_keys_exist.append(param_key)
   if (len(param_keys_absent) > len(param_keys) - threshold):
-    return None, {
-      'message': 'Missing %s' % ', '.join(param_keys_absent), 
-      'code': 400
-    }
+    return None, {'message': 'Missing %s' % ', '.join(param_keys_absent), 'code': 400}
   for param_key in param_keys_exist:
     params[param_key] = request.json[param_key]
 
-  return params, None
+  return reformat_params(params), None
 
 def validate_user_params(user_params):
   '''

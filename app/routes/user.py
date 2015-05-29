@@ -2,7 +2,7 @@ from flask import jsonify, request
 from app import app
 
 from app.database import db
-from app.models import Car, Session, User, UsersJoinCars
+from app.models import Car, Session, User
 
 from app import utils
 from app.utils import car_param_keys, user_param_keys
@@ -164,10 +164,6 @@ def create_car(session_token):
     return jsonify(error=error), 400
 
   error = utils.validate_car_params(car_params)
-  if (error):
-    return jsonify(error=error), 400
-
-  user, error = utils.try_create_user(user_params)
   if (error):
     return jsonify(error=error), 400
 
